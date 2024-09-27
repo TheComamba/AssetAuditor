@@ -1,3 +1,4 @@
 {
-
+    "asset_auditor.asset-filepaths": "Asset Filepaths",
+    "asset_auditor.sidebar-not-found": "The game settings sidebar section could not be found in HTML. The assets button cannot be rendered."
 }
