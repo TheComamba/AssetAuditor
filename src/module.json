@@ -1,0 +1,36 @@
+{
+  "id": "asset_auditor",
+  "title": "AssetAuditor",
+  "description": "List, check, modify and fix filepaths of assets in Foundry VTT.",
+  "authors": [
+    {
+      "name": "The Comamba",
+      "email": "thecomamba@jojoheinze.de"
+    }
+  ],
+  "version": "0.1.0",
+  "compatibility": {
+    "minimum": "11",
+		"verified": "12"
+  },
+  "esmodules": [
+    "scripts/main.js"
+  ],
+  "languages": [
+    {
+      "lang": "en",
+      "name": "English",
+      "path": "lang/en.json"
+    },
+    {
+      "lang": "de",
+      "name": "Deutsch",
+      "path": "lang/de.json"
+    }
+  ],
+  "url": "https://github.com/TheComamba/AssetAuditor",
+  "manifest": "https://raw.githubusercontent.com/TheComamba/AssetAuditor/v0.1.0/src/module.json",
+  "download": "https://github.com/TheComamba/AssetAuditor/archive/refs/tags/v0.1.0.zip",
+  "bugs": "https://github.com/TheComamba/AssetAuditor/issues",
+  "readme": "https://github.com/TheComamba/AssetAuditor/blob/v0.1.0/README.md"
+}
