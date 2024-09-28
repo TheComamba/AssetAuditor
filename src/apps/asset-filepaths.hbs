@@ -8,7 +8,8 @@
     <section>
         <div>
             {{#each assets}}
-            <div>
+            <div style="{{#unless isValid}}color: red;{{/unless}}">
+                <i class="fa fa-{{icon}}"></i>
                 <span>{{name}}</span>
                 <input type="text" value="{{path}}" />
             </div>
