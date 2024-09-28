@@ -7,7 +7,12 @@
 
     <section>
         <div>
-            {{assets}}
+            {{#each assets}}
+            <div>
+                <span>{{name}}</span>
+                <input type="text" value="{{path}}" />
+            </div>
+            {{/each}}
         </div>
     </section>
 </form>

@@ -45,12 +45,16 @@ function getAssetId(asset) {
 
 function getAllAssets() {
     const pointers = getAllAssetPointers();
-    return pointers.map(asset => ({
+    let assets = pointers.map(asset => ({
         name: getAssetName(asset),
         path: getAssetPath(asset),
         type: asset.constructor.name,
         id: getAssetId(asset)
     }));
+
+    assets.sort((a, b) => a.path.localeCompare(b.path));
+
+    return assets;
 }
 
 export { getAllAssets };
