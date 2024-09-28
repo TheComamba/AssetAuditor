@@ -1,4 +1,5 @@
 {
+    "asset_auditor.asset-aggregation.type-error": "Asset Typ \"{type}\" ist nicht unterstützt.",
     "asset_auditor.asset-filepaths": "Asset Dateipfade",
     "asset_auditor.sidebar-not-found": "Der Spieleinstellungen Abschnitt konnte nicht im HTML gefunden werden. Der Assets Button kann nicht angezeigt werden."
 }
