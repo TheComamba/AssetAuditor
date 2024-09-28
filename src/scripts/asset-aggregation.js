@@ -1,5 +1,3 @@
-import { loadExternalModule } from "./modules.js";
-
 function getAllAssetPointers() {
     const assets = [];
     const assetIds = new Set();
@@ -46,8 +44,12 @@ function getAssetId(asset) {
 }
 
 async function isValidPath(path) {
-    const fs = await loadExternalModule("fs-extra");
-    return fs.existsSync(path) && fs.lstatSync(path).isFile();
+    try {
+        const fileResult = await FilePicker.browse("data", path);
+        return fileResult.files.includes(path);
+    } catch {
+        return false;
+    }
 }
 
 async function getAllAssets() {
