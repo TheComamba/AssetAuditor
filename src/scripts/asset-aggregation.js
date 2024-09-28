@@ -1,3 +1,20 @@
+function getActors() {
+    const assets = [];
+    const assetIds = new Set();
+    const actors = game.collections.get("Actor");
+
+    actors.forEach(collection => {
+        collection.items.forEach(actor => {
+            if (!assetIds.has(actor._id)) {
+                assets.push(actor);
+                assetIds.add(actor._id);
+            }
+        });
+    });
+
+    return assets;
+}
+
 function getPlaylistSounds() {
     const assets = [];
     const assetIds = new Set();
@@ -18,41 +35,61 @@ function getPlaylistSounds() {
 
 function getAllAssetPointers() {
     const assets = [];
-    const sounds = getPlaylistSounds();
     assets.push({
         type: "PlaylistSound",
-        collection: sounds
+        collection: getPlaylistSounds()
+    });
+    assets.push({
+        type: "Actor",
+        collection: getActors()
     });
     return assets;
 }
+
+const postedErrorMessages = new Set();
 
 function showAssetTypeError(asset, typename = null) {
     if (!typename) {
         typename = asset.constructor.name;
     }
     const message = game.i18n.format("asset_auditor.asset-aggregation.type-error", { type: typename });
-    ui.notifications.error(message);
+    if (!postedErrorMessages.has(message)) {
+        ui.notifications.error(message);
+        postedErrorMessages.add(message);
+    }
 }
 
 function getAssetName(asset) {
+    if (asset instanceof Actor) {
+        return asset.name;
+    }
     if (asset instanceof PlaylistSound) {
         return asset.name;
     }
     showAssetTypeError(asset);
+    return null;
 }
 
 function getAssetPath(asset) {
+    if (asset instanceof Actor) {
+        return asset.img;
+    }
     if (asset instanceof PlaylistSound) {
         return asset.path;
     }
     showAssetTypeError(asset);
+    return null;
 }
 
 function getAssetId(asset) {
+    if (asset instanceof Actor) {
+        return asset._id;
+    }
     if (asset instanceof PlaylistSound) {
         return asset._id;
     }
     showAssetTypeError(asset);
+    return null;
 }
 
 function getIcon(type, isValid) {
@@ -79,7 +116,11 @@ async function getAllAssets(invalidOnly = false) {
     const pointerGroups = getAllAssetPointers();
     let assets = await Promise.all(
         pointerGroups.map(async group => {
-            let mappedAssets = await Promise.all(group.collection.map(assetPointerToObject));
+            const mappedAssets = await Promise.all(
+                group.collection.map(async (asset) => {
+                    return await assetPointerToObject(asset);
+                })
+            ).then(results => results.filter(asset => asset !== null));
 
             if (invalidOnly) {
                 mappedAssets = mappedAssets.filter(asset => !asset.isValid);
@@ -100,16 +141,37 @@ async function getAllAssets(invalidOnly = false) {
 }
 
 async function assetPointerToObject(asset) {
+    const id = getAssetId(asset);
+    if (id === null) {
+        return null;
+    }
+    const name = getAssetName(asset);
+    if (name === null) {
+        return null;
+    }
     const path = getAssetPath(asset);
+    if (path === null) {
+        return null;
+    }
     const type = asset.constructor.name;
+    if (type === null) {
+        return null;
+    }
     const isValid = await isValidPath(path);
+    if (isValid === null) {
+        return null;
+    }
+    const icon = getIcon(type, isValid);
+    if (icon === null) {
+        return null;
+    }
     return {
-        name: getAssetName(asset),
+        icon: icon,
+        id: id,
+        isValid: isValid,
+        name: name,
         path: path,
         type: type,
-        id: getAssetId(asset),
-        isValid: isValid,
-        icon: getIcon(type, isValid)
     };
 }
 
