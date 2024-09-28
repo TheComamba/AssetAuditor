@@ -11,12 +11,15 @@
 
     <section>
         <div>
-            {{#each assets}}
+            {{#each assets as |group|}}
+            <h2>{{group.type}}</h2>
+            {{#each group.assets}}
             <div style="{{#unless isValid}}color: red;{{/unless}}">
                 <i class="fa fa-{{icon}}"></i>
                 <span>{{name}}</span>
                 <input type="text" value="{{path}}" />
             </div>
+            {{/each}}
             {{/each}}
         </div>
     </section>

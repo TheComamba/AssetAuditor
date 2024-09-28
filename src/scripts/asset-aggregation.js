@@ -1,4 +1,4 @@
-function getAllAssetPointers() {
+function getPlaylistSounds() {
     const assets = [];
     const assetIds = new Set();
     const playlists = game.collections.get("Playlist");
@@ -13,6 +13,16 @@ function getAllAssetPointers() {
         });
     });
 
+    return assets;
+}
+
+function getAllAssetPointers() {
+    const assets = [];
+    const sounds = getPlaylistSounds();
+    assets.push({
+        type: "PlaylistSound",
+        collection: sounds
+    });
     return assets;
 }
 
@@ -66,29 +76,41 @@ async function isValidPath(path) {
 }
 
 async function getAllAssets(invalidOnly = false) {
-    const pointers = getAllAssetPointers();
-    let assets = await Promise.all(pointers.map(async (asset) => {
-        const path = getAssetPath(asset);
-        const type = asset.constructor.name;
-        const isValid = await isValidPath(path);
-        return {
-            name: getAssetName(asset),
-            path: path,
-            type: type,
-            id: getAssetId(asset),
-            isValid: isValid,
-            icon: getIcon(type, isValid)
-        };
-    }));
+    const pointerGroups = getAllAssetPointers();
+    let assets = await Promise.all(
+        pointerGroups.map(async group => {
+            let mappedAssets = await Promise.all(group.collection.map(assetPointerToObject));
 
+            if (invalidOnly) {
+                mappedAssets = mappedAssets.filter(asset => !asset.isValid);
+            }
 
-    if (invalidOnly) {
-        assets = assets.filter(asset => !asset.isValid);
-    }
+            mappedAssets.sort((a, b) => a.path.localeCompare(b.path));
 
-    assets.sort((a, b) => a.path.localeCompare(b.path));
+            return {
+                type: group.type,
+                assets: mappedAssets
+            };
+        })
+    );
+
+    assets.sort((a, b) => a.type.localeCompare(b.type));
 
     return assets;
+}
+
+async function assetPointerToObject(asset) {
+    const path = getAssetPath(asset);
+    const type = asset.constructor.name;
+    const isValid = await isValidPath(path);
+    return {
+        name: getAssetName(asset),
+        path: path,
+        type: type,
+        id: getAssetId(asset),
+        isValid: isValid,
+        icon: getIcon(type, isValid)
+    };
 }
 
 export { getAllAssets };
