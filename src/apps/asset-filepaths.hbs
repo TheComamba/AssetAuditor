@@ -2,6 +2,10 @@
     <section>
         <header>
             <h1>{{title}}</h1>
+            <label>
+                <input type="checkbox" id="toggle-invalid" {{#if showInvalidOnly}}checked{{/if}} />
+                {{localize "asset_auditor.asset-filepaths-app.invalidOnly"}}
+            </label>
         </header>
     </section>
 
