@@ -1,3 +1,5 @@
+import { getAllAssets } from "../scripts/asset-aggregation.js";
+
 class AssetFilepaths extends Application {
     constructor() {
         super();
@@ -12,6 +14,7 @@ class AssetFilepaths extends Application {
         this.context = await super.getData(options);
         this.context.title = game.i18n.localize("asset_auditor.asset-filepaths");
         this.context.content = "Content";
+        let assets = getAllAssets();
         return this.context;
     }
 }
