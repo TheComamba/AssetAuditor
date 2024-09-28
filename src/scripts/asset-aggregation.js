@@ -87,15 +87,18 @@ function getAssetId(asset) {
     return null;
 }
 
-function getIcon(type, isValid) {
+function getIcon(asset, isValid) {
     if (!isValid) {
         return "fas fa-file-circle-exclamation";
-    } else if (type === "PlaylistSound") {
-        return "fas fa-file-audio";
-    } else {
-        showAssetTypeError(type);
-        return "fas fa-times"
     }
+    if (asset instanceof Actor) {
+        return "fas fa-file-image";
+    }
+    if (asset instanceof PlaylistSound) {
+        return "fas fa-file-audio";
+    }
+    showAssetTypeError(type);
+    return "fas fa-times"
 }
 
 async function isValidPath(path) {
@@ -162,7 +165,7 @@ async function assetPointerToObject(asset) {
     if (isValid === null) {
         return null;
     }
-    const icon = getIcon(type, isValid);
+    const icon = getIcon(asset, isValid);
     if (icon === null) {
         return null;
     }
