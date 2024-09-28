@@ -3,13 +3,11 @@ function getActors() {
     const assetIds = new Set();
     const actors = game.collections.get("Actor");
 
-    actors.forEach(collection => {
-        collection.items.forEach(actor => {
-            if (!assetIds.has(actor._id)) {
-                assets.push(actor);
-                assetIds.add(actor._id);
-            }
-        });
+    actors.forEach(actor => {
+        if (!assetIds.has(actor._id)) {
+            assets.push(actor);
+            assetIds.add(actor._id);
+        }
     });
 
     return assets;
@@ -106,8 +104,9 @@ function getIcon(type, isValid) {
 async function isValidPath(path) {
     try {
         const fileResult = await FilePicker.browse("data", path);
-        return fileResult.files.includes(path);
-    } catch {
+        const files = fileResult.files;
+        return files.includes(path);
+    } catch (error) {
         return false;
     }
 }
@@ -116,11 +115,13 @@ async function getAllAssets(invalidOnly = false) {
     const pointerGroups = getAllAssetPointers();
     let assets = await Promise.all(
         pointerGroups.map(async group => {
-            const mappedAssets = await Promise.all(
+            let mappedAssets = await Promise.all(
                 group.collection.map(async (asset) => {
                     return await assetPointerToObject(asset);
                 })
-            ).then(results => results.filter(asset => asset !== null));
+            );
+
+            mappedAssets = mappedAssets.filter(item => item !== null);
 
             if (invalidOnly) {
                 mappedAssets = mappedAssets.filter(asset => !asset.isValid);
@@ -141,6 +142,9 @@ async function getAllAssets(invalidOnly = false) {
 }
 
 async function assetPointerToObject(asset) {
+    if (!asset) {
+        return null;
+    }
     const id = getAssetId(asset);
     if (id === null) {
         return null;
