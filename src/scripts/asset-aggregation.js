@@ -46,10 +46,7 @@ function getAllAssetPointers() {
 
 const postedErrorMessages = new Set();
 
-function showAssetTypeError(asset, typename = null) {
-    if (!typename) {
-        typename = asset.constructor.name;
-    }
+function showAssetTypeError(typename) {
     const message = game.i18n.format("asset_auditor.asset-aggregation.type-error", { type: typename });
     if (!postedErrorMessages.has(message)) {
         ui.notifications.error(message);
@@ -64,7 +61,7 @@ function getAssetName(asset) {
     if (asset instanceof PlaylistSound) {
         return asset.name;
     }
-    showAssetTypeError(asset);
+    showAssetTypeError(asset.constructor.name);
     return null;
 }
 
@@ -75,7 +72,7 @@ function getAssetPath(asset) {
     if (asset instanceof PlaylistSound) {
         return asset.path;
     }
-    showAssetTypeError(asset);
+    showAssetTypeError(asset.constructor.name);
     return null;
 }
 
@@ -86,7 +83,7 @@ function getAssetId(asset) {
     if (asset instanceof PlaylistSound) {
         return asset._id;
     }
-    showAssetTypeError(asset);
+    showAssetTypeError(asset.constructor.name);
     return null;
 }
 
@@ -96,7 +93,7 @@ function getIcon(type, isValid) {
     } else if (type === "PlaylistSound") {
         return "fas fa-file-audio";
     } else {
-        showAssetTypeError(asset, type);
+        showAssetTypeError(type);
         return "fas fa-times"
     }
 }
