@@ -65,7 +65,7 @@ async function isValidPath(path) {
     }
 }
 
-async function getAllAssets() {
+async function getAllAssets(invalidOnly = false) {
     const pointers = getAllAssetPointers();
     let assets = await Promise.all(pointers.map(async (asset) => {
         const path = getAssetPath(asset);
@@ -80,6 +80,11 @@ async function getAllAssets() {
             icon: getIcon(type, isValid)
         };
     }));
+
+
+    if (invalidOnly) {
+        assets = assets.filter(asset => !asset.isValid);
+    }
 
     assets.sort((a, b) => a.path.localeCompare(b.path));
 
