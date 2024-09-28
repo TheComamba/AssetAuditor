@@ -1,3 +1,5 @@
+import { loadExternalModule } from "./modules.js";
+
 function getAllAssetPointers() {
     const assets = [];
     const assetIds = new Set();
@@ -43,13 +45,22 @@ function getAssetId(asset) {
     showAssetTypeError(asset);
 }
 
-function getAllAssets() {
+async function isValidPath(path) {
+    const fs = await loadExternalModule("fs-extra");
+    return fs.existsSync(path) && fs.lstatSync(path).isFile();
+}
+
+async function getAllAssets() {
     const pointers = getAllAssetPointers();
-    let assets = pointers.map(asset => ({
-        name: getAssetName(asset),
-        path: getAssetPath(asset),
-        type: asset.constructor.name,
-        id: getAssetId(asset)
+    let assets = await Promise.all(pointers.map(async (asset) => {
+        const path = getAssetPath(asset);
+        return {
+            name: getAssetName(asset),
+            path: path,
+            type: asset.constructor.name,
+            id: getAssetId(asset),
+            isValid: await isValidPath(path)
+        };
     }));
 
     assets.sort((a, b) => a.path.localeCompare(b.path));
