@@ -13,8 +13,7 @@ class AssetFilepaths extends Application {
     async getData(options = {}) {
         this.context = await super.getData(options);
         this.context.title = game.i18n.localize("asset_auditor.asset-filepaths");
-        this.context.content = "Content";
-        let assets = getAllAssets();
+        this.context.assets = getAllAssets();
         return this.context;
     }
 }

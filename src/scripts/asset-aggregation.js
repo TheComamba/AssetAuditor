@@ -1,4 +1,4 @@
-function getAllAssets() {
+function getAllAssetPointers() {
     const assets = [];
     const assetIds = new Set();
     const playlists = game.collections.get("Playlist");
@@ -14,6 +14,43 @@ function getAllAssets() {
     });
 
     return assets;
+}
+
+function showAssetTypeError(asset) {
+    const typename = asset.constructor.name;
+    const message = game.i18n.format("asset_auditor.asset-aggregation.type-error", { type: typename });
+    ui.notifications.error(message);
+}
+
+function getAssetName(asset) {
+    if (asset instanceof PlaylistSound) {
+        return asset.name;
+    }
+    showAssetTypeError(asset);
+}
+
+function getAssetPath(asset) {
+    if (asset instanceof PlaylistSound) {
+        return asset.path;
+    }
+    showAssetTypeError(asset);
+}
+
+function getAssetId(asset) {
+    if (asset instanceof PlaylistSound) {
+        return asset._id;
+    }
+    showAssetTypeError(asset);
+}
+
+function getAllAssets() {
+    const pointers = getAllAssetPointers();
+    return pointers.map(asset => ({
+        name: getAssetName(asset),
+        path: getAssetPath(asset),
+        type: asset.constructor.name,
+        id: getAssetId(asset)
+    }));
 }
 
 export { getAllAssets };
