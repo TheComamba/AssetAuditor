@@ -167,7 +167,7 @@ async function assetPointerToObject(asset) {
         return null;
     }
     const path = getAssetPath(asset);
-    if (path === null) {
+    if (path === null || path.startsWith("icons/")) {
         return null;
     }
     const type = asset.constructor.name;
