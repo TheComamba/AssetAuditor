@@ -75,7 +75,7 @@ function getAssetPath(asset) {
     if (asset instanceof Scene) {
         return asset.background.src;
     }
-    if (asset instanceof PrototypeToken) {
+    if (asset instanceof foundry.data.PrototypeToken) {
         return asset.texture.src;
     }
     if (asset instanceof User) {
@@ -104,7 +104,7 @@ function getIcon(asset, isValid) {
     if (asset instanceof Scene) {
         return "fas fa-file-image";
     }
-    if (asset instanceof PrototypeToken) {
+    if (asset instanceof foundry.data.PrototypeToken) {
         return "fas fa-file-image";
     }
     if (asset instanceof User) {
