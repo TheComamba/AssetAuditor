@@ -1,29 +1,14 @@
-function getActors() {
+function getAssets(collectionName, extractAssets) {
     const assets = [];
     const assetIds = new Set();
-    const actors = game.collections.get("Actor");
+    const collection = game.collections.get(collectionName);
 
-    actors.forEach(actor => {
-        if (!assetIds.has(actor._id)) {
-            assets.push(actor);
-            assetIds.add(actor._id);
-        }
-    });
-
-    return assets;
-}
-
-function getPlaylistSounds() {
-    const assets = [];
-    const assetIds = new Set();
-    const playlists = game.collections.get("Playlist");
-
-    playlists.forEach(collection => {
-        const sounds = collection.sounds;
-        sounds.forEach(sound => {
-            if (!assetIds.has(sound._id)) {
-                assets.push(sound);
-                assetIds.add(sound._id);
+    collection.forEach(item => {
+        const items = extractAssets(item);
+        items.forEach(asset => {
+            if (!assetIds.has(asset._id)) {
+                assets.push(asset);
+                assetIds.add(asset._id);
             }
         });
     });
@@ -35,11 +20,11 @@ function getAllAssetPointers() {
     const assets = [];
     assets.push({
         type: "PlaylistSound",
-        collection: getPlaylistSounds()
+        collection: getAssets("Playlist", playlist => playlist.sounds)
     });
     assets.push({
         type: "Actor",
-        collection: getActors()
+        collection: getAssets("Actor", actor => [actor])
     });
     return assets;
 }
