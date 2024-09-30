@@ -23,6 +23,10 @@ function getAllAssetPointers() {
         collection: getAssets("Actor", actor => [actor])
     });
     assets.push({
+        type: "Item",
+        collection: getAssets("Item", item => [item])
+    });
+    assets.push({
         type: "PlaylistSound",
         collection: getAssets("Playlist", playlist => playlist.sounds)
     });
@@ -47,6 +51,9 @@ function getAssetName(asset) {
     if (asset instanceof Actor) {
         return asset.name;
     }
+    if (asset instanceof Item) {
+        return asset.name;
+    }
     if (asset instanceof PlaylistSound) {
         return asset.name;
     }
@@ -59,6 +66,9 @@ function getAssetName(asset) {
 
 function getAssetPath(asset) {
     if (asset instanceof Actor) {
+        return asset.img;
+    }
+    if (asset instanceof Item) {
         return asset.img;
     }
     if (asset instanceof PlaylistSound) {
@@ -76,6 +86,9 @@ function getIcon(asset, isValid) {
         return "fas fa-file-circle-exclamation";
     }
     if (asset instanceof Actor) {
+        return "fas fa-file-image";
+    }
+    if (asset instanceof Item) {
         return "fas fa-file-image";
     }
     if (asset instanceof PlaylistSound) {
