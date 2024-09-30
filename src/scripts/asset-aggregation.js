@@ -19,12 +19,16 @@ function getAssets(collectionName, extractAssets) {
 function getAllAssetPointers() {
     const assets = [];
     assets.push({
+        type: "Actor",
+        collection: getAssets("Actor", actor => [actor])
+    });
+    assets.push({
         type: "PlaylistSound",
         collection: getAssets("Playlist", playlist => playlist.sounds)
     });
     assets.push({
-        type: "Actor",
-        collection: getAssets("Actor", actor => [actor])
+        type: "User",
+        collection: getAssets("User", user => [user])
     });
     return assets;
 }
@@ -46,6 +50,9 @@ function getAssetName(asset) {
     if (asset instanceof PlaylistSound) {
         return asset.name;
     }
+    if (asset instanceof User) {
+        return asset.name;
+    }
     showAssetTypeError(asset.constructor.name);
     return null;
 }
@@ -57,16 +64,8 @@ function getAssetPath(asset) {
     if (asset instanceof PlaylistSound) {
         return asset.path;
     }
-    showAssetTypeError(asset.constructor.name);
-    return null;
-}
-
-function getAssetId(asset) {
-    if (asset instanceof Actor) {
-        return asset._id;
-    }
-    if (asset instanceof PlaylistSound) {
-        return asset._id;
+    if (asset instanceof User) {
+        return asset.avatar;
     }
     showAssetTypeError(asset.constructor.name);
     return null;
@@ -81,6 +80,9 @@ function getIcon(asset, isValid) {
     }
     if (asset instanceof PlaylistSound) {
         return "fas fa-file-audio";
+    }
+    if (asset instanceof User) {
+        return "fas fa-file-image";
     }
     showAssetTypeError(type);
     return "fas fa-times"
@@ -130,7 +132,7 @@ async function assetPointerToObject(asset) {
     if (!asset) {
         return null;
     }
-    const id = getAssetId(asset);
+    const id = asset._id;
     if (id === null) {
         return null;
     }
