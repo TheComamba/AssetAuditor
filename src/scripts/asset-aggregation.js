@@ -39,6 +39,10 @@ function getAllAssetPointers() {
         collection: getAssets("Scene", scene => [scene])
     });
     assets.push({
+        type: "Token",
+        collection: getAssets("Actor", actor => [actor]).map(actor => actor.prototypeToken)
+    });
+    assets.push({
         type: "User",
         collection: getAssets("User", user => [user])
     });
@@ -53,29 +57,6 @@ function showAssetTypeError(typename) {
         ui.notifications.error(message);
         postedErrorMessages.add(message);
     }
-}
-
-function getAssetName(asset) {
-    if (asset instanceof Actor) {
-        return asset.name;
-    }
-    if (asset instanceof Item) {
-        return asset.name;
-    }
-    if (asset instanceof JournalEntryPage) {
-        return asset.name;
-    }
-    if (asset instanceof PlaylistSound) {
-        return asset.name;
-    }
-    if (asset instanceof Scene) {
-        return asset.name;
-    }
-    if (asset instanceof User) {
-        return asset.name;
-    }
-    showAssetTypeError(asset.constructor.name);
-    return null;
 }
 
 function getAssetPath(asset) {
@@ -93,6 +74,9 @@ function getAssetPath(asset) {
     }
     if (asset instanceof Scene) {
         return asset.background.src;
+    }
+    if (asset instanceof PrototypeToken) {
+        return asset.texture.src;
     }
     if (asset instanceof User) {
         return asset.avatar;
@@ -118,6 +102,9 @@ function getIcon(asset, isValid) {
         return "fas fa-file-audio";
     }
     if (asset instanceof Scene) {
+        return "fas fa-file-image";
+    }
+    if (asset instanceof PrototypeToken) {
         return "fas fa-file-image";
     }
     if (asset instanceof User) {
@@ -175,7 +162,7 @@ async function assetPointerToObject(asset) {
     if (id === null) {
         return null;
     }
-    const name = getAssetName(asset);
+    const name = asset.name;
     if (name === null) {
         return null;
     }
