@@ -27,6 +27,10 @@ function getAllAssetPointers() {
         collection: getAssets("Item", item => [item])
     });
     assets.push({
+        type: "JournalEntryPage",
+        collection: getAssets("JournalEntry", journal => journal.pages)
+    });
+    assets.push({
         type: "PlaylistSound",
         collection: getAssets("Playlist", playlist => playlist.sounds)
     });
@@ -58,6 +62,9 @@ function getAssetName(asset) {
     if (asset instanceof Item) {
         return asset.name;
     }
+    if (asset instanceof JournalEntryPage) {
+        return asset.name;
+    }
     if (asset instanceof PlaylistSound) {
         return asset.name;
     }
@@ -77,6 +84,9 @@ function getAssetPath(asset) {
     }
     if (asset instanceof Item) {
         return asset.img;
+    }
+    if (asset instanceof JournalEntryPage) {
+        return asset.src;
     }
     if (asset instanceof PlaylistSound) {
         return asset.path;
@@ -100,6 +110,9 @@ function getIcon(asset, isValid) {
     }
     if (asset instanceof Item) {
         return "fas fa-file-image";
+    }
+    if (asset instanceof JournalEntryPage) {
+        return "fas fa-file";
     }
     if (asset instanceof PlaylistSound) {
         return "fas fa-file-audio";
