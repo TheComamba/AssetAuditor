@@ -114,17 +114,40 @@ function getIcon(asset, isValid) {
     return "fas fa-times"
 }
 
+let directoryCache = {};
+
 async function isValidPath(path) {
-    try {
-        const fileResult = await FilePicker.browse("data", path);
-        const files = fileResult.files;
-        return files.includes(path);
-    } catch (error) {
+    const dirIndex = path.lastIndexOf('/');
+    const dir = dirIndex !== -1 ? path.substring(0, dirIndex) : '';
+
+    // Check if the directory is in the cache
+    if (!directoryCache.hasOwnProperty(dir)) {
+        try {
+            const fileResult = await FilePicker.browse("data", dir);
+            directoryCache[dir] = fileResult;
+        } catch (error) {
+            // Cache false to indicate that browsing this directory failed
+            directoryCache[dir] = false;
+        }
+    }
+
+    // Retrieve the cached fileResult
+    const fileResult = directoryCache[dir];
+
+    // If browsing the directory failed, return false
+    if (!fileResult) {
         return false;
     }
+
+    const files = fileResult.files;
+    return files.includes(path);
 }
 
 async function getAllAssets(invalidOnly = false) {
+    console.time('getAllAssets');
+
+    directoryCache = {};
+
     const pointerGroups = getAllAssetPointers();
     let assets = await Promise.all(
         pointerGroups.map(async group => {
@@ -150,6 +173,8 @@ async function getAllAssets(invalidOnly = false) {
     );
 
     assets.sort((a, b) => a.type.localeCompare(b.type));
+
+    console.timeEnd('getAllAssets');
 
     return assets;
 }
