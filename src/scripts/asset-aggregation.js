@@ -114,21 +114,39 @@ function getIcon(asset, isValid) {
     return "fas fa-times"
 }
 
+function collectAssetDirectories(pointerGroups) {
+    const assetDirs = new Set();
+    pointerGroups.forEach(group => {
+        group.collection.forEach(pointer => {
+            const path = getAssetPath(pointer);
+            if (path === null) {
+                return;
+            }
+            const dir = path.substring(0, path.lastIndexOf('/'));
+            assetDirs.add(dir);
+        });
+    });
+    return Array.from(assetDirs);
+}
+
 let fileCache = {};
+
+async function initializeFileCache(assetDirs) {
+    for (const dir of assetDirs) {
+        if (!fileCache.hasOwnProperty(dir)) {
+            try {
+                const fileResult = await FilePicker.browse("data", dir);
+                fileCache[dir] = fileResult.files;
+            } catch (error) {
+                fileCache[dir] = [];
+            }
+        }
+    }
+}
 
 async function isValidPath(path) {
     const dirIndex = path.lastIndexOf('/');
     const dir = dirIndex !== -1 ? path.substring(0, dirIndex) : '';
-
-    if (!fileCache.hasOwnProperty(dir)) {
-        try {
-            const fileResult = await FilePicker.browse("data", dir);
-            fileCache[dir] = fileResult.files;
-        } catch (error) {
-            fileCache[dir] = [];
-        }
-    }
-
     const files = fileCache[dir];
     return files.includes(path);
 }
@@ -136,9 +154,9 @@ async function isValidPath(path) {
 async function getAllAssets(invalidOnly = false) {
     console.time('getAllAssets');
 
-    fileCache = {};
-
     const pointerGroups = getAllAssetPointers();
+    const assetDirs = collectAssetDirectories(pointerGroups);
+    await initializeFileCache(assetDirs);
     let assets = await Promise.all(
         pointerGroups.map(async group => {
             let mappedAssets = await Promise.all(
