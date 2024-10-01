@@ -114,39 +114,29 @@ function getIcon(asset, isValid) {
     return "fas fa-times"
 }
 
-let directoryCache = {};
+let fileCache = {};
 
 async function isValidPath(path) {
     const dirIndex = path.lastIndexOf('/');
     const dir = dirIndex !== -1 ? path.substring(0, dirIndex) : '';
 
-    // Check if the directory is in the cache
-    if (!directoryCache.hasOwnProperty(dir)) {
+    if (!fileCache.hasOwnProperty(dir)) {
         try {
             const fileResult = await FilePicker.browse("data", dir);
-            directoryCache[dir] = fileResult;
+            fileCache[dir] = fileResult.files;
         } catch (error) {
-            // Cache false to indicate that browsing this directory failed
-            directoryCache[dir] = false;
+            fileCache[dir] = [];
         }
     }
 
-    // Retrieve the cached fileResult
-    const fileResult = directoryCache[dir];
-
-    // If browsing the directory failed, return false
-    if (!fileResult) {
-        return false;
-    }
-
-    const files = fileResult.files;
+    const files = fileCache[dir];
     return files.includes(path);
 }
 
 async function getAllAssets(invalidOnly = false) {
     console.time('getAllAssets');
 
-    directoryCache = {};
+    fileCache = {};
 
     const pointerGroups = getAllAssetPointers();
     let assets = await Promise.all(
