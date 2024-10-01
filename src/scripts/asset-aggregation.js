@@ -144,7 +144,7 @@ async function initializeFileCache(assetDirs) {
     }
 }
 
-async function isValidPath(path) {
+function isValidPath(path) {
     const dirIndex = path.lastIndexOf('/');
     const dir = dirIndex !== -1 ? path.substring(0, dirIndex) : '';
     const files = fileCache[dir];
@@ -157,28 +157,24 @@ async function getAllAssets(invalidOnly = false) {
     const pointerGroups = getAllAssetPointers();
     const assetDirs = collectAssetDirectories(pointerGroups);
     await initializeFileCache(assetDirs);
-    let assets = await Promise.all(
-        pointerGroups.map(async group => {
-            let mappedAssets = await Promise.all(
-                group.collection.map(async (asset) => {
-                    return await assetPointerToObject(asset);
-                })
-            );
+    let assets = pointerGroups.map(group => {
+        let mappedAssets = group.collection.map(asset => {
+            return assetPointerToObject(asset);
+        });
 
-            mappedAssets = mappedAssets.filter(item => item !== null);
+        mappedAssets = mappedAssets.filter(item => item !== null);
 
-            if (invalidOnly) {
-                mappedAssets = mappedAssets.filter(asset => !asset.isValid);
-            }
+        if (invalidOnly) {
+            mappedAssets = mappedAssets.filter(asset => !asset.isValid);
+        }
 
-            mappedAssets.sort((a, b) => a.path.localeCompare(b.path));
+        mappedAssets.sort((a, b) => a.path.localeCompare(b.path));
 
-            return {
-                type: group.type,
-                assets: mappedAssets
-            };
-        })
-    );
+        return {
+            type: group.type,
+            assets: mappedAssets
+        };
+    });
 
     assets.sort((a, b) => a.type.localeCompare(b.type));
 
@@ -187,7 +183,7 @@ async function getAllAssets(invalidOnly = false) {
     return assets;
 }
 
-async function assetPointerToObject(asset) {
+function assetPointerToObject(asset) {
     if (!asset) {
         return null;
     }
@@ -207,7 +203,7 @@ async function assetPointerToObject(asset) {
     if (type === null) {
         return null;
     }
-    const isValid = await isValidPath(path);
+    const isValid = isValidPath(path);
     if (isValid === null) {
         return null;
     }
