@@ -132,6 +132,7 @@ function collectAssetDirectories(pointerGroups) {
 let fileCache = {};
 
 async function initializeFileCache(assetDirs) {
+    fileCache = {};
     for (const dir of assetDirs) {
         if (!fileCache.hasOwnProperty(dir)) {
             try {
