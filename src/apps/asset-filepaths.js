@@ -25,7 +25,19 @@ class AssetFilepaths extends Application {
             this.showInvalidOnly = event.target.checked;
             this.render();
         });
+
+        html.find('.update-button').click((event) => {
+            const button = $(event.currentTarget);
+            const inputValue = button.siblings('.path-input').val();
+            const assetId = button.data('asset-id');
+            this.updateAssetPath(assetId, inputValue);
+        });
     }
+
+    updateAssetPath(assetId, inputValue) {
+        console.log("Button clicked with input:", inputValue, "Asset ID:", assetId);
+        // TODO: Logic.
+    };
 }
 
 export { AssetFilepaths };
