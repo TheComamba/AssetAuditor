@@ -85,6 +85,31 @@ function getAssetPath(asset) {
     return null;
 }
 
+function setAssetPath(asset, path) {
+    if (asset instanceof Actor) {
+        asset.img = path;
+    }
+    if (asset instanceof Item) {
+        asset.img = path;
+    }
+    if (asset instanceof JournalEntryPage) {
+        asset.src = path;
+    }
+    if (asset instanceof PlaylistSound) {
+        asset.path = path;
+    }
+    if (asset instanceof Scene) {
+        asset.background.src = path
+    }
+    if (asset instanceof foundry.data.PrototypeToken) {
+        asset.texture.src = path;
+    }
+    if (asset instanceof User) {
+        asset.avatar = path;
+    }
+    showAssetTypeError(asset.constructor.name);
+}
+
 function getIcon(asset, isValid) {
     if (!isValid) {
         return "fas fa-file-circle-exclamation";
@@ -222,4 +247,4 @@ function assetPointerToObject(asset) {
     };
 }
 
-export { getAllAssets };
+export { getAllAssets, setAssetPath };

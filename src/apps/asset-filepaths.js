@@ -1,4 +1,4 @@
-import { getAllAssets } from "../scripts/asset-aggregation.js";
+import { getAllAssets, setAssetPath } from "../scripts/asset-aggregation.js";
 
 class AssetFilepaths extends Application {
     constructor() {
@@ -34,9 +34,18 @@ class AssetFilepaths extends Application {
         });
     }
 
+    findAsset(assetId) {
+        return this.context.assets.find(asset => asset.id === assetId);
+    }
+
     updateAssetPath(assetId, inputValue) {
-        console.log("Button clicked with input:", inputValue, "Asset ID:", assetId);
-        // TODO: Logic.
+        const asset = this.findAsset(assetId);
+        if (!asset) {
+            ui.notifications.error(game.i18n.format("asset_auditor.asset-filepaths-app.asset-not-found", { id: assetId }));
+            return;
+        }
+        setAssetPath(asset, inputValue);
+        this.render();
     };
 }
 
