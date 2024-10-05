@@ -151,11 +151,27 @@ async function initializeFileCache(assetDirs) {
     return fileCache;
 }
 
+function isFileContained(file, files) {
+    while (file.startsWith('/')) {
+        file = file.substring(1);
+    }
+    if (files.includes(file)) {
+        return true;
+    }
+    const encodedFile = encodeURI(file);
+    for (const f of files) {
+        if (f === encodedFile) {
+            return true;
+        }
+    }
+    return false;
+}
+
 function isValidPath(path, fileCache) {
     const dirIndex = path.lastIndexOf('/');
     const dir = dirIndex !== -1 ? path.substring(0, dirIndex) : '';
     const files = fileCache[dir];
-    return files.includes(path);
+    return isFileContained(path, files);
 }
 
 async function dirExists(dir) {
