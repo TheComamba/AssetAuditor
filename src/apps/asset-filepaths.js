@@ -47,7 +47,7 @@ class AssetFilepaths extends Application {
             }
             const currentPath = getAssetPath(asset);
             new FilePicker({
-                type: 'file',
+                type: 'any',
                 current: currentPath,
                 callback: (path) => {
                     input.val(path);
