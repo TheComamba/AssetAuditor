@@ -207,7 +207,7 @@ async function addLastValidPathsToInvalidAssets(assets) {
     }
 }
 
-async function getAllAssets(invalidOnly = false) {
+async function getAllAssets(invalidOnly = false, searchText = '') {
     console.time('getAllAssets');
 
     const pointerGroups = getAllAssetPointers();
@@ -222,6 +222,11 @@ async function getAllAssets(invalidOnly = false) {
 
         if (invalidOnly) {
             mappedAssets = mappedAssets.filter(asset => !asset.isValid);
+        }
+
+        if (searchText) {
+            const search = searchText.toLowerCase();
+            mappedAssets = mappedAssets.filter(asset => asset.name.toLowerCase().includes(search) || asset.path.toLowerCase().includes(search));
         }
 
         mappedAssets.sort((a, b) => a.name.localeCompare(b.name));

@@ -5,6 +5,7 @@ class AssetFilepaths extends Application {
         super();
         this.context = {};
         this.showInvalidOnly = false;
+        this.searchText = '';
     }
 
     get template() {
@@ -15,7 +16,8 @@ class AssetFilepaths extends Application {
         this.context = await super.getData(options);
         this.context.title = game.i18n.localize("asset_auditor.asset-filepaths");
         this.context.showInvalidOnly = this.showInvalidOnly
-        this.context.assets = await getAllAssets(this.showInvalidOnly);
+        this.context.searchText = this.searchText;
+        this.context.assets = await getAllAssets(this.showInvalidOnly, this.searchText);
         return this.context;
     }
 
@@ -23,6 +25,13 @@ class AssetFilepaths extends Application {
         super.activateListeners(html);
         html.find('#toggle-invalid').change(async (event) => {
             this.showInvalidOnly = event.target.checked;
+            this.render();
+        });
+
+        html.find('.search-button').click((event) => {
+            const button = $(event.currentTarget);
+            const input = button.siblings('.search-input');
+            this.searchText = input.val();
             this.render();
         });
 
