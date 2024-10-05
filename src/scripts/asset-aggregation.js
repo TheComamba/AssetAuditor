@@ -88,24 +88,31 @@ function getAssetPath(asset) {
 function setAssetPath(asset, path) {
     if (asset instanceof Actor) {
         asset.img = path;
+        return;
     }
     if (asset instanceof Item) {
         asset.img = path;
+        return;
     }
     if (asset instanceof JournalEntryPage) {
         asset.src = path;
+        return;
     }
     if (asset instanceof PlaylistSound) {
         asset.path = path;
+        return;
     }
     if (asset instanceof Scene) {
         asset.background.src = path
+        return;
     }
     if (asset instanceof foundry.data.PrototypeToken) {
         asset.texture.src = path;
+        return;
     }
     if (asset instanceof User) {
         asset.avatar = path;
+        return;
     }
     showAssetTypeError(asset.constructor.name);
 }
@@ -194,7 +201,7 @@ async function getAllAssets(invalidOnly = false) {
             mappedAssets = mappedAssets.filter(asset => !asset.isValid);
         }
 
-        mappedAssets.sort((a, b) => a.path.localeCompare(b.path));
+        mappedAssets.sort((a, b) => a.name.localeCompare(b.name));
 
         return {
             type: group.type,
