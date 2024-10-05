@@ -28,11 +28,35 @@ class AssetFilepaths extends Application {
 
         html.find('.update-button').click((event) => {
             const button = $(event.currentTarget);
-            const inputValue = button.siblings('.path-input').val();
+            const input = button.siblings('.path-input');
+            const inputValue = input.val();
             const assetId = button.data('asset-id');
             this.updateAssetPath(assetId, inputValue);
             input.data('original-value', inputValue);
             button.css('opacity', 0);
+        });
+
+        html.find('.browse-button').click((event) => {
+            const button = $(event.currentTarget);
+            const input = button.siblings('.path-input');
+            const assetId = button.data('asset-id');
+            const asset = this.findAsset(assetId);
+            if (!asset) {
+                ui.notifications.error(game.i18n.format("asset_auditor.asset-filepaths-app.asset-not-found", { id: assetId }));
+                return;
+            }
+            new FilePicker({
+                type: 'file',
+                current: asset.path,
+                callback: (path) => {
+                    input.val(path);
+                    this.updateAssetPath(assetId, path);
+                    input.data('original-value', path);
+                    button.siblings('.update-button').css('opacity', 0);
+                },
+                top: this.position.top + 40,
+                left: this.position.left + 10
+            }).browse(asset.path);
         });
 
         html.find('.path-input').on('input', (event) => {
