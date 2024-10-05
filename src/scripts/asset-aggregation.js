@@ -59,30 +59,37 @@ function showAssetTypeError(typename) {
     }
 }
 
+const assetPathMap = new Map([
+    [Actor, 'img'],
+    [Item, 'img'],
+    [JournalEntryPage, 'src'],
+    [PlaylistSound, 'path'],
+    [Scene, 'background.src'],
+    [foundry.data.PrototypeToken, 'texture.src'],
+    [User, 'avatar']
+]);
+
 function getAssetPath(asset) {
-    if (asset instanceof Actor) {
-        return asset.img;
-    }
-    if (asset instanceof Item) {
-        return asset.img;
-    }
-    if (asset instanceof JournalEntryPage) {
-        return asset.src;
-    }
-    if (asset instanceof PlaylistSound) {
-        return asset.path;
-    }
-    if (asset instanceof Scene) {
-        return asset.background.src;
-    }
-    if (asset instanceof foundry.data.PrototypeToken) {
-        return asset.texture.src;
-    }
-    if (asset instanceof User) {
-        return asset.avatar;
+    for (const [assetType, propertyPath] of assetPathMap.entries()) {
+        if (asset instanceof assetType) {
+            return propertyPath.split('.').reduce((obj, prop) => obj[prop], asset);
+        }
     }
     showAssetTypeError(asset.constructor.name);
     return null;
+}
+
+function setAssetPath(asset, path) {
+    for (const [assetType, propertyPath] of assetPathMap.entries()) {
+        if (asset instanceof assetType) {
+            const properties = propertyPath.split('.');
+            const lastProperty = properties.pop();
+            const target = properties.reduce((obj, prop) => obj[prop], asset);
+            target[lastProperty] = path;
+            return;
+        }
+    }
+    showAssetTypeError(asset.constructor.name);
 }
 
 function getIcon(asset, isValid) {
@@ -169,7 +176,7 @@ async function getAllAssets(invalidOnly = false) {
             mappedAssets = mappedAssets.filter(asset => !asset.isValid);
         }
 
-        mappedAssets.sort((a, b) => a.path.localeCompare(b.path));
+        mappedAssets.sort((a, b) => a.name.localeCompare(b.name));
 
         return {
             type: group.type,
@@ -213,6 +220,7 @@ function assetPointerToObject(asset) {
         return null;
     }
     return {
+        asset: asset,
         icon: icon,
         id: id,
         isValid: isValid,
@@ -222,4 +230,4 @@ function assetPointerToObject(asset) {
     };
 }
 
-export { getAllAssets };
+export { getAllAssets, getAssetPath, setAssetPath };

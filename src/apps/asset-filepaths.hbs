@@ -13,14 +13,24 @@
         <div>
             {{#each assets as |group|}}
             <h2>{{group.type}}</h2>
-            {{#each group.assets}}
-            <div style="{{#unless isValid}}color: red;{{/unless}}">
-                <i class="fa fa-{{icon}}"></i>
-                <span>{{name}}</span>
-                <input type="text" value="{{path}}" />
+            {{#each group.assets as |asset|}}
+            <div style="display: flex; align-items: center; {{#unless asset.isValid}}color: red;{{/unless}}">
+                <i class="fa fa-{{asset.icon}}" style="width: 25px;"></i>
+                <span style="width: 150px;">{{asset.name}}</span>
+                <input type="text" value="{{asset.path}}" data-original-value="{{asset.path}}" class="path-input"
+                    style="width: 750px;" />
+                <button type="button" class="browse-button" data-asset-id="{{asset.id}}"
+                    style="width: 25px; background: none; border: none;">
+                    <i class="fa fa-folder-open"></i>
+                </button>
+                <button type="button" class="update-button" data-asset-id="{{asset.id}}"
+                    style="width: 25px; background: none; border: none; opacity: 0;">
+                    <i class="fa fa-save"></i>
+                </button>
             </div>
             {{/each}}
             {{/each}}
         </div>
     </section>
+
 </form>
