@@ -14,7 +14,7 @@
         {{#each assets as |group|}}
             <h2>{{group.type}}</h2>
             {{#each group.assets as |asset|}}
-            <div style="display: flex; align-items: center; margin-bottom: 8px; {{#unless asset.isValid}}color: red;{{/unless}}">
+            <div style="display: flex; align-items: center; {{#unless asset.isValid}}color: red;{{/unless}}">
                 <i class="fa fa-{{asset.icon}}" style="margin-right: 8px;"></i>
                 <span style="flex-grow: 1;">{{asset.name}}</span>
                 <div style="display: flex; align-items: center; gap: 8px;">
