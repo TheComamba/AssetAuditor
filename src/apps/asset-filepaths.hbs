@@ -14,12 +14,12 @@
             {{#each assets as |group|}}
                 <h2>{{group.type}}</h2>
                 {{#each group.assets as |asset|}}
-                <div style="{{#unless asset.isValid}}color: red;{{/unless}}">
-                    <i class="fa fa-{{asset.icon}}"></i>
-                    <span>{{asset.name}}</span>
-                    <input type="text" value="{{asset.path}}" class="path-input" />
-                    <button type="button" class="update-button" data-asset-id="{{asset.id}}">Update</button>
+                <div style="display: flex; align-items: center; {{#unless asset.isValid}}color: red;{{/unless}}">
+                    <i class="fa fa-{{asset.icon}}" style="margin-right: 8px;"></i>
+                    <span style="margin-right: 16px;">{{asset.name}}</span>
+                    <button type="button" class="update-button" data-asset-id="{{asset.id}}" style="margin-right: 16px;">Update</button>
                 </div>
+                <input type="text" value="{{asset.path}}" class="path-input"/>
                 {{/each}}
             {{/each}}
         </div>
