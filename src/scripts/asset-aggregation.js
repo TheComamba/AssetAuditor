@@ -79,13 +79,10 @@ function getAssetPath(asset) {
     return null;
 }
 
-function setAssetPath(asset, path) {
+async function setAssetPath(asset, path) {
     for (const [assetType, propertyPath] of assetPathMap.entries()) {
         if (asset instanceof assetType) {
-            const properties = propertyPath.split('.');
-            const lastProperty = properties.pop();
-            const target = properties.reduce((obj, prop) => obj[prop], asset);
-            target[lastProperty] = path;
+            await asset.update({ [propertyPath]: path });
             return;
         }
     }
