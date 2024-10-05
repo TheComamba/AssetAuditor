@@ -32,6 +32,18 @@ class AssetFilepaths extends Application {
             const assetId = button.data('asset-id');
             this.updateAssetPath(assetId, inputValue);
         });
+
+        html.find('.path-input').on('input', (event) => {
+            const input = $(event.currentTarget);
+            const originalValue = input.data('original-value');
+            const currentValue = input.val();
+            const updateButton = input.siblings('.update-button');
+            if (currentValue !== originalValue) {
+                updateButton.prop('disabled', false);
+            } else {
+                updateButton.prop('disabled', true);
+            }
+        });
     }
 
     findAsset(assetId) {

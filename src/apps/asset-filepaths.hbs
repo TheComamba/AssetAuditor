@@ -17,8 +17,9 @@
             <div style="display: flex; align-items: center; {{#unless asset.isValid}}color: red;{{/unless}}">
                 <i class="fa fa-{{asset.icon}}" style="width: 25px;"></i>
                 <span style="width: 150px;">{{asset.name}}</span>
-                <input type="text" value="{{asset.path}}" class="path-input" style="width: 750px;" />
-                <button type="button" class="update-button" data-asset-id="{{asset.id}}"
+                <input type="text" value="{{asset.path}}" data-original-value="{{asset.path}}" class="path-input"
+                    style="width: 750px;" />
+                <button type="button" class="update-button" data-asset-id="{{asset.id}}" disabled
                     style="width: 25px; background: none; border: none;">
                     <i class="fa fa-save"></i>
                 </button>
