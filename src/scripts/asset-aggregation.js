@@ -59,60 +59,35 @@ function showAssetTypeError(typename) {
     }
 }
 
+const assetPathMap = new Map([
+    [Actor, 'img'],
+    [Item, 'img'],
+    [JournalEntryPage, 'src'],
+    [PlaylistSound, 'path'],
+    [Scene, 'background.src'],
+    [foundry.data.PrototypeToken, 'texture.src'],
+    [User, 'avatar']
+]);
+
 function getAssetPath(asset) {
-    if (asset instanceof Actor) {
-        return asset.img;
-    }
-    if (asset instanceof Item) {
-        return asset.img;
-    }
-    if (asset instanceof JournalEntryPage) {
-        return asset.src;
-    }
-    if (asset instanceof PlaylistSound) {
-        return asset.path;
-    }
-    if (asset instanceof Scene) {
-        return asset.background.src;
-    }
-    if (asset instanceof foundry.data.PrototypeToken) {
-        return asset.texture.src;
-    }
-    if (asset instanceof User) {
-        return asset.avatar;
+    for (const [assetType, propertyPath] of assetPathMap.entries()) {
+        if (asset instanceof assetType) {
+            return propertyPath.split('.').reduce((obj, prop) => obj[prop], asset);
+        }
     }
     showAssetTypeError(asset.constructor.name);
     return null;
 }
 
 function setAssetPath(asset, path) {
-    if (asset instanceof Actor) {
-        asset.img = path;
-        return;
-    }
-    if (asset instanceof Item) {
-        asset.img = path;
-        return;
-    }
-    if (asset instanceof JournalEntryPage) {
-        asset.src = path;
-        return;
-    }
-    if (asset instanceof PlaylistSound) {
-        asset.path = path;
-        return;
-    }
-    if (asset instanceof Scene) {
-        asset.background.src = path
-        return;
-    }
-    if (asset instanceof foundry.data.PrototypeToken) {
-        asset.texture.src = path;
-        return;
-    }
-    if (asset instanceof User) {
-        asset.avatar = path;
-        return;
+    for (const [assetType, propertyPath] of assetPathMap.entries()) {
+        if (asset instanceof assetType) {
+            const properties = propertyPath.split('.');
+            const lastProperty = properties.pop();
+            const target = properties.reduce((obj, prop) => obj[prop], asset);
+            target[lastProperty] = path;
+            return;
+        }
     }
     showAssetTypeError(asset.constructor.name);
 }
