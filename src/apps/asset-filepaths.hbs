@@ -9,25 +9,23 @@
         </header>
     </section>
 
-<section>
-    <div>
-        {{#each assets as |group|}}
+    <section>
+        <div>
+            {{#each assets as |group|}}
             <h2>{{group.type}}</h2>
             {{#each group.assets as |asset|}}
             <div style="display: flex; align-items: center; {{#unless asset.isValid}}color: red;{{/unless}}">
-                <i class="fa fa-{{asset.icon}}" style="margin-right: 8px;"></i>
-                <span style="flex-grow: 1;">{{asset.name}}</span>
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <input type="text" value="{{asset.path}}" class="path-input" style="flex-grow: 1;"/>
-                    <button type="button" class="update-button" data-asset-id="{{asset.id}}" 
-                            style="background: none; border: none; padding: 4px;">
-                        <i class="fa fa-sync"></i>
-                    </button>
-                </div>
+                <i class="fa fa-{{asset.icon}}" style="width: 25px;"></i>
+                <span style="width: 150px;">{{asset.name}}</span>
+                <input type="text" value="{{asset.path}}" class="path-input" style="width: 750px;" />
+                <button type="button" class="update-button" data-asset-id="{{asset.id}}"
+                    style="width: 50px; background: none; border: none; padding: 4px;">
+                    <i class="fa fa-sync"></i>
+                </button>
             </div>
             {{/each}}
-        {{/each}}
-    </div>
-</section>
+            {{/each}}
+        </div>
+    </section>
 
 </form>
