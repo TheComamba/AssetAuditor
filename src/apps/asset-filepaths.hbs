@@ -28,6 +28,12 @@
                     <i class="fa fa-save"></i>
                 </button>
             </div>
+            {{#unless asset.isValid}}
+            <div style="margin-bottom: 10px;">
+                <span style="width: 165px; text-align: right; display: inline-block; margin-right: 10px;">{{localize "asset_auditor.asset-filepaths-app.lastValidPath"}}</span>
+                <span style="width: 750px; text-align: left; display: inline-block;">{{asset.lastValidPath}}</span>
+            </div>
+            {{/unless}}
             {{/each}}
             {{/each}}
         </div>
