@@ -83,13 +83,13 @@ class AssetFilepaths extends Application {
         return null;
     }
 
-    updateAssetPath(assetId, inputValue) {
+    async updateAssetPath(assetId, inputValue) {
         const asset = this.findAsset(assetId);
         if (!asset) {
             ui.notifications.error(game.i18n.format("asset_auditor.asset-filepaths-app.asset-not-found", { id: assetId }));
             return;
         }
-        setAssetPath(asset, inputValue);
+        await setAssetPath(asset, inputValue);
         this.render();
     };
 }
