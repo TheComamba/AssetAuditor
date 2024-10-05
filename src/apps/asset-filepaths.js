@@ -80,6 +80,19 @@ class AssetFilepaths extends Application {
                 updateButton.css('opacity', 0);
             }
         });
+
+        html.find('.search-input').on('input', (event) => {
+            const input = $(event.currentTarget);
+            const replaceButton = html.find('.replace-button');
+            if (input.val().trim() !== '') {
+                replaceButton.prop('disabled', false);
+            } else {
+                replaceButton.prop('disabled', true);
+            }
+        });
+
+        const initialSearchText = html.find('.search-input').val();
+        html.find('.replace-button').prop('disabled', initialSearchText.trim() === '');
     }
 
     findAsset(assetId) {
