@@ -31,6 +31,8 @@ class AssetFilepaths extends Application {
             const inputValue = button.siblings('.path-input').val();
             const assetId = button.data('asset-id');
             this.updateAssetPath(assetId, inputValue);
+            input.data('original-value', inputValue);
+            button.css('opacity', 0);
         });
 
         html.find('.path-input').on('input', (event) => {
@@ -39,9 +41,9 @@ class AssetFilepaths extends Application {
             const currentValue = input.val();
             const updateButton = input.siblings('.update-button');
             if (currentValue !== originalValue) {
-                updateButton.prop('disabled', false);
+                updateButton.css('opacity', 1);
             } else {
-                updateButton.prop('disabled', true);
+                updateButton.css('opacity', 0);
             }
         });
     }
