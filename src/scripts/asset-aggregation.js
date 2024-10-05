@@ -136,10 +136,8 @@ function collectAssetDirectories(pointerGroups) {
     return Array.from(assetDirs);
 }
 
-let fileCache = {};
-
 async function initializeFileCache(assetDirs) {
-    fileCache = {};
+    const fileCache = {};
     for (const dir of assetDirs) {
         if (!fileCache.hasOwnProperty(dir)) {
             try {
@@ -150,9 +148,10 @@ async function initializeFileCache(assetDirs) {
             }
         }
     }
+    return fileCache;
 }
 
-function isValidPath(path) {
+function isValidPath(path, fileCache) {
     const dirIndex = path.lastIndexOf('/');
     const dir = dirIndex !== -1 ? path.substring(0, dirIndex) : '';
     const files = fileCache[dir];
@@ -164,10 +163,10 @@ async function getAllAssets(invalidOnly = false) {
 
     const pointerGroups = getAllAssetPointers();
     const assetDirs = collectAssetDirectories(pointerGroups);
-    await initializeFileCache(assetDirs);
+    const fileCache = await initializeFileCache(assetDirs);
     let assets = pointerGroups.map(group => {
         let mappedAssets = group.collection.map(asset => {
-            return assetPointerToObject(asset);
+            return assetPointerToObject(asset, fileCache);
         });
 
         mappedAssets = mappedAssets.filter(item => item !== null);
@@ -191,7 +190,7 @@ async function getAllAssets(invalidOnly = false) {
     return assets;
 }
 
-function assetPointerToObject(asset) {
+function assetPointerToObject(asset, fileCache) {
     if (!asset) {
         return null;
     }
@@ -211,7 +210,7 @@ function assetPointerToObject(asset) {
     if (type === null) {
         return null;
     }
-    const isValid = isValidPath(path);
+    const isValid = isValidPath(path, fileCache);
     if (isValid === null) {
         return null;
     }
