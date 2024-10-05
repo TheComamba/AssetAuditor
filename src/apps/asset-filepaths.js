@@ -35,7 +35,13 @@ class AssetFilepaths extends Application {
     }
 
     findAsset(assetId) {
-        return this.context.assets.find(asset => asset.id === assetId);
+        for (const assetMap of this.context.assets) {
+            const assetObject = assetMap.assets.find(asset => asset.id === assetId);
+            if (assetObject) {
+                return assetObject.asset;
+            }
+        }
+        return null;
     }
 
     updateAssetPath(assetId, inputValue) {

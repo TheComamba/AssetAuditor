@@ -238,6 +238,7 @@ function assetPointerToObject(asset) {
         return null;
     }
     return {
+        asset: asset,
         icon: icon,
         id: id,
         isValid: isValid,
