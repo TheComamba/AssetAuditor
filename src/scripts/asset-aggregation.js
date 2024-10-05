@@ -158,6 +158,42 @@ function isValidPath(path, fileCache) {
     return files.includes(path);
 }
 
+async function dirExists(dir) {
+    try {
+        const result = await FilePicker.browse("data", dir);
+        return true;
+    } catch (error) {
+        return false;
+    }
+}
+
+async function getLastValidPath(inputPath) {
+    const pathComponents = inputPath.split('/');
+    let lastValidPath = '';
+    let currentPath = '';
+
+    for (const component of pathComponents) {
+        currentPath = currentPath ? `${currentPath}/${component}` : component;
+        if (await dirExists(currentPath)) {
+            lastValidPath = currentPath;
+        } else {
+            break;
+        }
+    }
+
+    return lastValidPath;
+}
+
+async function addLastValidPathsToInvalidAssets(assets) {
+    for (const assetTypes of assets) {
+        for (const asset of assetTypes.assets) {
+            if (!asset.isValid) {
+                asset.lastValidPath = await getLastValidPath(asset.path);
+            }
+        }
+    }
+}
+
 async function getAllAssets(invalidOnly = false) {
     console.time('getAllAssets');
 
@@ -182,6 +218,8 @@ async function getAllAssets(invalidOnly = false) {
             assets: mappedAssets
         };
     });
+
+    await addLastValidPathsToInvalidAssets(assets);
 
     assets.sort((a, b) => a.type.localeCompare(b.type));
 
