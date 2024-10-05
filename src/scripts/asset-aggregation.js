@@ -230,4 +230,4 @@ function assetPointerToObject(asset) {
     };
 }
 
-export { getAllAssets, setAssetPath };
+export { getAllAssets, getAssetPath, setAssetPath };

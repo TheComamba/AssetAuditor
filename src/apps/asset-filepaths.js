@@ -1,4 +1,4 @@
-import { getAllAssets, setAssetPath } from "../scripts/asset-aggregation.js";
+import { getAllAssets, getAssetPath, setAssetPath } from "../scripts/asset-aggregation.js";
 
 class AssetFilepaths extends Application {
     constructor() {
@@ -45,9 +45,10 @@ class AssetFilepaths extends Application {
                 ui.notifications.error(game.i18n.format("asset_auditor.asset-filepaths-app.asset-not-found", { id: assetId }));
                 return;
             }
+            const currentPath = getAssetPath(asset);
             new FilePicker({
                 type: 'file',
-                current: asset.path,
+                current: currentPath,
                 callback: (path) => {
                     input.val(path);
                     this.updateAssetPath(assetId, path);
