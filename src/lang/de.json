@@ -12,5 +12,8 @@
     "asset_auditor.app.reset-button": "Setze Pfadänderungen zurück",
     "asset_auditor.app.browse-button": "Durchsuche das Dateisystem",
     "asset_auditor.app.update-button": "Schreibe Pfad in Asset",
+    "asset_auditor.invalid-assets-found": "Asset Auditor hat {count} invalide Dateipfade gefunden.",
+    "asset_auditor.settings.run-on-startup": "Asset Audit beim Start durchführen",
+    "asset_auditor.settings.run-on-startup-hint": "Dies führt das Asset Audit beim Start durch und zeigt eine Fehlermeldung, falls ungültige Dateipfade gefunden werden.",
     "asset_auditor.sidebar-not-found": "Der Spieleinstellungen Abschnitt konnte nicht im HTML gefunden werden. Der Assets Button kann nicht angezeigt werden."
 }
