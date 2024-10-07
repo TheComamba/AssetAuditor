@@ -298,4 +298,4 @@ function assetPointerToObject(asset, fileCache) {
     };
 }
 
-export { getAllAssets, getAllAssetTypes, getAssetPath, setAssetPath };
+export { getAllAssets, getAllAssetTypes, getAssetPath, getLastValidPath, setAssetPath };

@@ -1,4 +1,4 @@
-import { getAllAssets, getAllAssetTypes, getAssetPath, setAssetPath } from "../scripts/asset-aggregation.js";
+import { getAllAssets, getAllAssetTypes, getAssetPath, getLastValidPath, setAssetPath } from "../scripts/asset-aggregation.js";
 
 class AssetFilepaths extends Application {
     constructor() {
@@ -85,28 +85,34 @@ class AssetFilepaths extends Application {
             this.refresh(html);
         });
 
-        html.find('.browse-button').click((event) => {
-            const button = $(event.currentTarget);
-            const input = button.siblings('.path-input');
-            const assetId = button.data('asset-id');
+        html.find('.browse-button').click(async (event) => {
+            const browseButton = $(event.currentTarget);
+            const input = browseButton.siblings('.path-input');
+            const assetId = browseButton.data('asset-id');
             const asset = this.findAsset(assetId);
             if (!asset) {
                 ui.notifications.error(game.i18n.format("asset_auditor.app.asset-not-found", { id: assetId }));
                 return;
             }
-            const currentPath = getAssetPath(asset);
-            new FilePicker({
+            const lastValidPath = asset.lastValidPath;
+            const filePicker = new FilePicker({
                 type: 'any',
-                current: currentPath,
+                current: lastValidPath,
                 callback: (path) => {
                     input.val(path);
                     this.updateAssetPath(assetId, path);
                     input.data('original-value', path);
-                    button.siblings('.update-button').css('opacity', 0);
+                    const resetButton = browseButton.siblings('.reset-button');
+                    const updateBurron = browseButton.siblings('.update-button');
+                    resetButton.css('opacity', 0);
+                    resetButton.prop('disabled', true);
+                    updateBurron.css('opacity', 0);
+                    updateBurron.prop('disabled', true);
                 },
                 top: this.position.top + 40,
                 left: this.position.left + 10
-            }).browse(asset.path);
+            });
+            await filePicker.browse(lastValidPath);
             this.refresh(html);
         });
 
@@ -229,7 +235,7 @@ class AssetFilepaths extends Application {
         for (const assetMap of this.context.assets) {
             const assetObject = assetMap.assets.find(asset => asset.id === assetId);
             if (assetObject) {
-                return assetObject.asset;
+                return assetObject;
             }
         }
         return null;
@@ -241,7 +247,7 @@ class AssetFilepaths extends Application {
             ui.notifications.error(game.i18n.format("asset_auditor.app.asset-not-found", { id: assetId }));
             return;
         }
-        await setAssetPath(asset, inputValue);
+        await setAssetPath(asset.asset, inputValue);
         this.render();
     };
 }
