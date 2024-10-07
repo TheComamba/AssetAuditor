@@ -5,6 +5,9 @@ class AssetFilepaths extends Application {
         super();
         this.context = {};
         this.showInvalidOnly = false;
+        this.currentSearchInput = '';
+        this.searchText = '';
+        this.replaceText = '';
     }
 
     get template() {
@@ -15,15 +18,35 @@ class AssetFilepaths extends Application {
         this.context = await super.getData(options);
         this.context.title = game.i18n.localize("asset_auditor.asset-filepaths");
         this.context.showInvalidOnly = this.showInvalidOnly
-        this.context.assets = await getAllAssets(this.showInvalidOnly);
+        this.context.currentSearchInput = this.currentSearchInput;
+        this.context.searchText = this.searchText;
+        this.context.replaceText = this.replaceText;
+        this.context.assets = await getAllAssets(this.showInvalidOnly, this.searchText);
         return this.context;
     }
 
     activateListeners(html) {
         super.activateListeners(html);
+
         html.find('#toggle-invalid').change(async (event) => {
             this.showInvalidOnly = event.target.checked;
-            this.render();
+            this.refresh(html);
+        });
+
+        html.find('.delete-search-button').click((event) => {
+            this.performDeleteSearch(event, html);
+        });
+
+        html.find('.delete-replace-button').click((event) => {
+            this.performDeleteReplace(event, html);
+        });
+
+        html.find('.search-button').click((_event) => {
+            this.performSearch(html);
+        });
+
+        html.find('.replace-button').click(async (_event) => {
+            await this.performReplacement(html);
         });
 
         html.find('.update-button').click((event) => {
@@ -34,6 +57,7 @@ class AssetFilepaths extends Application {
             this.updateAssetPath(assetId, inputValue);
             input.data('original-value', inputValue);
             button.css('opacity', 0);
+            this.refresh(html);
         });
 
         html.find('.browse-button').click((event) => {
@@ -58,6 +82,7 @@ class AssetFilepaths extends Application {
                 top: this.position.top + 40,
                 left: this.position.left + 10
             }).browse(asset.path);
+            this.refresh(html);
         });
 
         html.find('.path-input').on('input', (event) => {
@@ -67,10 +92,107 @@ class AssetFilepaths extends Application {
             const updateButton = input.siblings('.update-button');
             if (currentValue !== originalValue) {
                 updateButton.css('opacity', 1);
+                updateButton.prop('disabled', false);
             } else {
                 updateButton.css('opacity', 0);
+                updateButton.prop('disabled', true);
             }
         });
+
+        html.find('.search-input')
+            .on('input', (event) => {
+                const input = $(event.currentTarget);
+                this.currentSearchInput = input.val();
+                this.updateOperability(html);
+            })
+            .on('keydown', (event) => {
+                if (event.key === 'Enter') {
+                    this.performSearch(html);
+                } else if (event.key === 'Escape') {
+                    this.performDeleteSearch(event, html);
+                }
+            });
+
+        html.find('.replace-input')
+            .on('input', (event) => {
+                const input = $(event.currentTarget);
+                this.replaceText = input.val();
+                this.updateOperability(html);
+            })
+            .on('keydown', async (event) => {
+                if (event.key === 'Enter') {
+                    await this.performReplacement(html);
+                } else if (event.key === 'Escape') {
+                    this.performDeleteReplace(event, html);
+                }
+            });
+
+        this.updateOperability(html);
+    }
+
+    performDeleteReplace(event, html) {
+        const button = $(event.currentTarget);
+        const input = button.siblings('.replace-input');
+        input.val('');
+        this.replaceText = '';
+        this.refresh(html);
+    }
+
+    performDeleteSearch(event, html) {
+        const button = $(event.currentTarget);
+        const input = button.siblings('.search-input');
+        input.val('');
+        this.currentSearchInput = '';
+        this.searchText = '';
+        this.refresh(html);
+    }
+
+    async performReplacement(html) {
+        this.searchText = this.currentSearchInput;
+        const assets = this.context.assets.flatMap(assetMap => assetMap.assets.map(asset => asset.asset));
+        for (const asset of assets) {
+            const currentPath = getAssetPath(asset);
+            if (currentPath.includes(this.searchText)) {
+                const newPath = currentPath.replace(this.searchText, this.replaceText);
+                await setAssetPath(asset, newPath);
+            }
+        }
+        this.refresh(html);
+    }
+
+    performSearch(html) {
+        this.searchText = this.currentSearchInput;
+        this.refresh(html);
+    }
+
+    refresh(html) {
+        this.render();
+        this.updateOperability(html);
+    }
+
+    updateOperability(html) {
+        const deleteSearchButton = html.find('.delete-search-button');
+        const searchButton = html.find('.search-button');
+        const replaceButton = html.find('.replace-button');
+        if (this.currentSearchInput.trim() !== '') {
+            deleteSearchButton.prop('disabled', false);
+            deleteSearchButton.css('opacity', 1);
+            searchButton.prop('disabled', false);
+            replaceButton.prop('disabled', false);
+        } else {
+            deleteSearchButton.prop('disabled', true);
+            deleteSearchButton.css('opacity', 0);
+            searchButton.prop('disabled', true);
+            replaceButton.prop('disabled', true);
+        }
+        const deleteReplaceButton = html.find('.delete-replace-button');
+        if (this.replaceText.trim() !== '') {
+            deleteReplaceButton.prop('disabled', false);
+            deleteReplaceButton.css('opacity', 1);
+        } else {
+            deleteReplaceButton.prop('disabled', true);
+            deleteReplaceButton.css('opacity', 0);
+        }
     }
 
     findAsset(assetId) {
