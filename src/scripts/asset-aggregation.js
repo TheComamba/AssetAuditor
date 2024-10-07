@@ -16,49 +16,26 @@ function getAssets(collectionName, extractAssets) {
     return assets;
 }
 
+let assetTypes = [
+    { type: "Actor", startAsset: "Actor", closure: actor => [actor] },
+    { type: "Item", startAsset: "Item", closure: item => [item] },
+    { type: "JournalEntryPage", startAsset: "JournalEntry", closure: journal => journal.pages },
+    { type: "PlaylistSound", startAsset: "Playlist", closure: playlist => playlist.sounds },
+    { type: "PrototypeToken", startAsset: "Actor", closure: actor => [actor.prototypeToken] },
+    { type: "Scene", startAsset: "Scene", closure: scene => [scene] },
+    { type: "Sound", startAsset: "Scene", closure: scene => scene.sounds },
+    { type: "Tile", startAsset: "Scene", closure: scene => scene.tiles },
+    { type: "Token", startAsset: "Scene", closure: scene => scene.tokens },
+    { type: "User", startAsset: "User", closure: user => [user] }
+];
+
 function getAllAssetPointers() {
-    const assets = [];
-    assets.push({
-        type: "Actor",
-        collection: getAssets("Actor", actor => [actor])
+    return assetTypes.map(assetType => {
+        return {
+            type: assetType.type,
+            collection: getAssets(assetType.startAsset, assetType.closure)
+        };
     });
-    assets.push({
-        type: "Item",
-        collection: getAssets("Item", item => [item])
-    });
-    assets.push({
-        type: "JournalEntryPage",
-        collection: getAssets("JournalEntry", journal => journal.pages)
-    });
-    assets.push({
-        type: "PlaylistSound",
-        collection: getAssets("Playlist", playlist => playlist.sounds)
-    });
-    assets.push({
-        type: "PrototypeToken",
-        collection: getAssets("Actor", actor => [actor]).map(actor => actor.prototypeToken)
-    });
-    assets.push({
-        type: "Scene",
-        collection: getAssets("Scene", scene => [scene])
-    });
-    assets.push({
-        type: "Sound",
-        collection: getAssets("Scene", scene => scene.sounds)
-    });
-    assets.push({
-        type: "Tile",
-        collection: getAssets("Scene", scene => scene.tiles)
-    });
-    assets.push({
-        type: "Token",
-        collection: getAssets("Scene", scene => scene.tokens)
-    });
-    assets.push({
-        type: "User",
-        collection: getAssets("User", user => [user])
-    });
-    return assets;
 }
 
 const postedErrorMessages = new Set();
