@@ -1,10 +1,16 @@
 {
     "asset_auditor.asset-aggregation.type-error": "Asset Typ \"{type}\" ist nicht unterstützt.",
     "asset_auditor.asset-filepaths": "Asset Dateipfade",
-    "asset_auditor.asset-filepaths-app.asset-not-found": "Asset mit ID {id} wurde nicht gefunden.",
-    "asset_auditor.asset-filepaths-app.filterAssets": "Zeige nur Asset vom Typ",
-    "asset_auditor.asset-filepaths-app.invalidOnly": "Nur invalide Dateipfade anzeigen",
-    "asset_auditor.asset-filepaths-app.lastValidPath": "Letzter valider Pfad:",
-    "asset_auditor.moduleLoadFailed": "Modul \"{name}\" konnte nicht geladen werden: {error}",
+    "asset_auditor.app.asset-not-found": "Asset mit ID {id} wurde nicht gefunden.",
+    "asset_auditor.app.filter-assets": "Zeige nur Asset vom Typ",
+    "asset_auditor.app.invalid-only": "Nur invalide Dateipfade anzeigen",
+    "asset_auditor.app.last-valid-path": "Letzter valider Pfad:",
+    "asset_auditor.app.delete-search-button": "Lösche Eingabe im Suchfeld",
+    "asset_auditor.app.search-search-button": "Durchsuche Assets",
+    "asset_auditor.app.delete-replace-button": "Lösche Eingaben im Ersetzungsfeld",
+    "asset_auditor.app.replace-button": "Ersetze alle",
+    "asset_auditor.app.reset-button": "Setze Pfadänderungen zurück",
+    "asset_auditor.app.browse-button": "Durchsuche das Dateisystem",
+    "asset_auditor.app.update-button": "Schreibe Pfad in Asset",
     "asset_auditor.sidebar-not-found": "Der Spieleinstellungen Abschnitt konnte nicht im HTML gefunden werden. Der Assets Button kann nicht angezeigt werden."
 }

@@ -91,7 +91,7 @@ class AssetFilepaths extends Application {
             const assetId = button.data('asset-id');
             const asset = this.findAsset(assetId);
             if (!asset) {
-                ui.notifications.error(game.i18n.format("asset_auditor.asset-filepaths-app.asset-not-found", { id: assetId }));
+                ui.notifications.error(game.i18n.format("asset_auditor.app.asset-not-found", { id: assetId }));
                 return;
             }
             const currentPath = getAssetPath(asset);
@@ -238,7 +238,7 @@ class AssetFilepaths extends Application {
     async updateAssetPath(assetId, inputValue) {
         const asset = this.findAsset(assetId);
         if (!asset) {
-            ui.notifications.error(game.i18n.format("asset_auditor.asset-filepaths-app.asset-not-found", { id: assetId }));
+            ui.notifications.error(game.i18n.format("asset_auditor.app.asset-not-found", { id: assetId }));
             return;
         }
         await setAssetPath(asset, inputValue);
