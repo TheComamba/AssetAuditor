@@ -5,6 +5,7 @@ class AssetFilepaths extends Application {
         super();
         this.context = {};
         this.showInvalidOnly = false;
+        this.currentSearchInput = '';
         this.searchText = '';
         this.replaceText = '';
     }
@@ -17,6 +18,7 @@ class AssetFilepaths extends Application {
         this.context = await super.getData(options);
         this.context.title = game.i18n.localize("asset_auditor.asset-filepaths");
         this.context.showInvalidOnly = this.showInvalidOnly
+        this.context.currentSearchInput = this.currentSearchInput;
         this.context.searchText = this.searchText;
         this.context.replaceText = this.replaceText;
         this.context.assets = await getAllAssets(this.showInvalidOnly, this.searchText);
@@ -34,6 +36,7 @@ class AssetFilepaths extends Application {
             const button = $(event.currentTarget);
             const input = button.siblings('.search-input');
             input.val('');
+            this.currentSearchInput = '';
             this.searchText = '';
             this.render();
         });
@@ -48,8 +51,7 @@ class AssetFilepaths extends Application {
 
         html.find('.search-button').click((event) => {
             const button = $(event.currentTarget);
-            const input = button.siblings('.search-input');
-            this.searchText = input.val();
+            this.searchText = this.currentSearchInput;
             this.render();
         });
 
@@ -126,6 +128,7 @@ class AssetFilepaths extends Application {
                 replaceButton.prop('disabled', true);
                 deleteInputButton.prop('disabled', true);
             }
+            this.currentSearchInput = input.val();
         });
 
         html.find('.replace-input').on('input', (event) => {
@@ -136,6 +139,7 @@ class AssetFilepaths extends Application {
             } else {
                 deleteInputButton.prop('disabled', true);
             }
+            this.replaceText = input.val();
         });
 
         const initialSearchText = html.find('.search-input').val();
