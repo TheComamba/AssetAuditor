@@ -29,13 +29,17 @@ let assetTypes = [
     { type: User, startAsset: "User", closure: user => [user] }
 ];
 
-function getAllAssetPointers() {
+function getAllAssetPointers(singularType) {
     let assets = assetTypes.map(assetType => {
+        if (singularType && assetType.type.name !== singularType) {
+            return null;
+        }
         return {
             type: assetType.type.name,
             collection: getAssets(assetType.startAsset, assetType.closure)
         };
     });
+    assets = assets.filter(asset => asset !== null);
     assets.sort((a, b) => a.type.localeCompare(b.type));
     return assets;
 }
@@ -210,10 +214,10 @@ async function addLastValidPathsToInvalidAssets(assets) {
     }
 }
 
-async function getAllAssets(invalidOnly = false, searchText = '') {
+async function getAllAssets(invalidOnly, searchText, singularType) {
     console.time('getAllAssets');
 
-    const pointerGroups = getAllAssetPointers();
+    const pointerGroups = getAllAssetPointers(singularType);
     const assetDirs = collectAssetDirectories(pointerGroups);
     const fileCache = await initializeFileCache(assetDirs);
     let assets = pointerGroups.map(group => {

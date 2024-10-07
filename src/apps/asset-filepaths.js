@@ -8,6 +8,7 @@ class AssetFilepaths extends Application {
         this.currentSearchInput = '';
         this.searchText = '';
         this.replaceText = '';
+        this.singularType = '';
     }
 
     get template() {
@@ -21,7 +22,7 @@ class AssetFilepaths extends Application {
         this.context.currentSearchInput = this.currentSearchInput;
         this.context.searchText = this.searchText;
         this.context.replaceText = this.replaceText;
-        this.context.assets = await getAllAssets(this.showInvalidOnly, this.searchText);
+        this.context.assets = await getAllAssets(this.showInvalidOnly, this.searchText, this.singularType);
         return this.context;
     }
 
