@@ -1,5 +1,16 @@
 import { AssetFilepaths } from "../apps/asset-filepaths.js";
 
+Hooks.once('init', function () {
+    game.settings.register("asset_auditor", "runOnStartup", {
+        name: game.i18n.localize("asset_auditor.settings.run-on-startup"),
+        hint: game.i18n.localize("asset_auditor.settings.run-on-startup-hint"),
+        scope: "world",
+        config: true,
+        type: Boolean,
+        default: false
+    });
+});
+
 Hooks.on("renderSidebarTab", async (app, html) => {
     if (app instanceof Settings) {
         let button_text = game.i18n.localize("asset_auditor.asset-filepaths");

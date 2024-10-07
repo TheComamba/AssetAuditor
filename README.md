@@ -1,8 +1,8 @@
-# AssetAuditor
+# Asset Auditor
 
 ## About
 
-AssetAuditor is a module for [Foundry Virtual Tabletop](https://foundryvtt.com/). The idea arose because I kept wondering why my music playlists would stop playing all the time. At some point I noticed that they do so once they try to load a file that doesn't exists. Checking all files by hand is a pain, though. So here we are.
+Asset Auditor is a module for [Foundry Virtual Tabletop](https://foundryvtt.com/). The idea arose because I kept wondering why my music playlists would stop playing all the time. At some point I noticed that they do so once they try to load a file that doesn't exists. Checking all files by hand is a pain, though. So here we are.
 
 ## Usage
 
@@ -14,7 +14,7 @@ TODO
 
 ## Manual Installation
 
-To manually install AssetAuditor (e.g. for development), copy the src/ folder of this repository to the {userData}/Data/modules/ folder of Foundry, and then rename it to 'asset_auditor' (the id declared in module.json).
+To manually install Asset Auditor (e.g. for development), copy the src/ folder of this repository to the {userData}/Data/modules/ folder of Foundry, and then rename it to 'asset_auditor' (the id declared in module.json).
 
 On POSIX compliant operating systems like Linux and Mac you can alternatively use a symbolic link. It can be created via e.g.
 

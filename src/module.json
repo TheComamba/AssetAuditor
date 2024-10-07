@@ -1,6 +1,6 @@
 {
   "id": "asset_auditor",
-  "title": "AssetAuditor",
+  "title": "Asset Auditor",
   "description": "List, check, modify and fix filepaths of assets in Foundry VTT.",
   "authors": [
     {
