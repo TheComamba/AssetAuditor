@@ -2,6 +2,7 @@
     "asset_auditor.asset-aggregation.type-error": "Asset type \"{type}\" is not supported.",
     "asset_auditor.asset-filepaths": "Asset Filepaths",
     "asset_auditor.asset-filepaths-app.asset-not-found": "Asset with ID {id} was not found.",
+    "asset_auditor.asset-filepaths-app.filterAssets": "Show only assets of type",
     "asset_auditor.asset-filepaths-app.invalidOnly": "Show only invalid filepaths",
     "asset_auditor.asset-filepaths-app.lastValidPath": "Last valid path:",
     "asset_auditor.moduleLoadFailed": "Unable to load module \"{name}\": {error}",

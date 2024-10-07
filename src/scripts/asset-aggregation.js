@@ -16,48 +16,37 @@ function getAssets(collectionName, extractAssets) {
     return assets;
 }
 
-function getAllAssetPointers() {
-    const assets = [];
-    assets.push({
-        type: "Actor",
-        collection: getAssets("Actor", actor => [actor])
+let assetTypes = [
+    { type: Actor, startAsset: "Actor", closure: actor => [actor] },
+    { type: Item, startAsset: "Item", closure: item => [item] },
+    { type: JournalEntryPage, startAsset: "JournalEntry", closure: journal => journal.pages },
+    { type: PlaylistSound, startAsset: "Playlist", closure: playlist => playlist.sounds },
+    { type: foundry.data.PrototypeToken, startAsset: "Actor", closure: actor => [actor.prototypeToken] },
+    { type: Scene, startAsset: "Scene", closure: scene => [scene] },
+    { type: AmbientSoundDocument, startAsset: "Scene", closure: scene => scene.sounds },
+    { type: TileDocument, startAsset: "Scene", closure: scene => scene.tiles },
+    { type: TokenDocument, startAsset: "Scene", closure: scene => scene.tokens },
+    { type: User, startAsset: "User", closure: user => [user] }
+];
+
+function getAllAssetTypes() {
+    let types = assetTypes.map(assetType => assetType.type.name);
+    types.sort((a, b) => a.localeCompare(b));
+    return types;
+}
+
+function getAllAssetPointers(singularType) {
+    let assets = assetTypes.map(assetType => {
+        if (singularType && assetType.type.name !== singularType) {
+            return null;
+        }
+        return {
+            type: assetType.type.name,
+            collection: getAssets(assetType.startAsset, assetType.closure)
+        };
     });
-    assets.push({
-        type: "Item",
-        collection: getAssets("Item", item => [item])
-    });
-    assets.push({
-        type: "JournalEntryPage",
-        collection: getAssets("JournalEntry", journal => journal.pages)
-    });
-    assets.push({
-        type: "PlaylistSound",
-        collection: getAssets("Playlist", playlist => playlist.sounds)
-    });
-    assets.push({
-        type: "PrototypeToken",
-        collection: getAssets("Actor", actor => [actor]).map(actor => actor.prototypeToken)
-    });
-    assets.push({
-        type: "Scene",
-        collection: getAssets("Scene", scene => [scene])
-    });
-    assets.push({
-        type: "Sound",
-        collection: getAssets("Scene", scene => scene.sounds)
-    });
-    assets.push({
-        type: "Tile",
-        collection: getAssets("Scene", scene => scene.tiles)
-    });
-    assets.push({
-        type: "Token",
-        collection: getAssets("Scene", scene => scene.tokens)
-    });
-    assets.push({
-        type: "User",
-        collection: getAssets("User", user => [user])
-    });
+    assets = assets.filter(asset => asset !== null);
+    assets.sort((a, b) => a.type.localeCompare(b.type));
     return assets;
 }
 
@@ -231,10 +220,10 @@ async function addLastValidPathsToInvalidAssets(assets) {
     }
 }
 
-async function getAllAssets(invalidOnly = false, searchText = '') {
+async function getAllAssets(invalidOnly, searchText, singularType) {
     console.time('getAllAssets');
 
-    const pointerGroups = getAllAssetPointers();
+    const pointerGroups = getAllAssetPointers(singularType);
     const assetDirs = collectAssetDirectories(pointerGroups);
     const fileCache = await initializeFileCache(assetDirs);
     let assets = pointerGroups.map(group => {
@@ -309,4 +298,4 @@ function assetPointerToObject(asset, fileCache) {
     };
 }
 
-export { getAllAssets, getAssetPath, setAssetPath };
+export { getAllAssets, getAllAssetTypes, getAssetPath, setAssetPath };
