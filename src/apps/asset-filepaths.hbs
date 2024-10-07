@@ -21,17 +21,21 @@
                     <i class="fa fa-exchange"></i>
                 </button>
             </div>
-            {{localize "asset_auditor.asset-filepaths-app.filterAssets"}}
-            <select id="asset-type-dropdown">
-                <option value=""></option>
-                {{#each assetTypes}}
-                <option value="{{this}}">{{this}}</option>
-                {{/each}}
-            </select>
-            <input type="checkbox" id="toggle-invalid" {{#if showInvalidOnly}}checked{{/if}} />
-            <span>
-                {{localize "asset_auditor.asset-filepaths-app.invalidOnly"}}
-            </span>
+            <div style="display: flex; align-items: center;">
+                <span style="margin-right: 10px;">
+                    {{localize "asset_auditor.asset-filepaths-app.filterAssets"}}
+                </span>
+                <select id="asset-type-dropdown" style="margin-right: 20px;">
+                    <option value=""></option>
+                    {{#each assetTypes}}
+                    <option value="{{this}}">{{this}}</option>
+                    {{/each}}
+                </select>
+                <input type="checkbox" id="toggle-invalid" {{#if showInvalidOnly}}checked{{/if}} />
+                <span>
+                    {{localize "asset_auditor.asset-filepaths-app.invalidOnly"}}
+                </span>
+            </div>
         </header>
     </section>
 
