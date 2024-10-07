@@ -14,7 +14,8 @@ Hooks.once('init', function () {
 
 Hooks.once('ready', async function () {
     if (game.settings.get("asset_auditor", "runOnStartup")) {
-        const invalidAssets = await getAllAssets(true, '', '');
+        const invalidAssetTypes = await getAllAssets(true, '', '');
+        const invalidAssets = invalidAssetTypes.flatMap(assetType => assetType.assets);
         if (invalidAssets.length > 0) {
             const errorMessage = game.i18n.format("asset_auditor.invalid-assets-found", { count: invalidAssets.length });
             ui.notifications.error(errorMessage);
