@@ -31,7 +31,7 @@
                 <select id="asset-type-dropdown" style="margin-right: 20px;">
                     <option value=""></option>
                     {{#each assetTypes}}
-                    <option value="{{this}}">{{this}}</option>
+                    <option value="{{this}}" {{#if (eq this ../singularType)}}selected{{/if}}>{{this}}</option>
                     {{/each}}
                 </select>
                 <input type="checkbox" id="toggle-invalid" {{#if showInvalidOnly}}checked{{/if}} />
