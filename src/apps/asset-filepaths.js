@@ -1,4 +1,4 @@
-import { getAllAssets, getAssetPath, setAssetPath } from "../scripts/asset-aggregation.js";
+import { getAllAssets, getAllAssetTypes, getAssetPath, setAssetPath } from "../scripts/asset-aggregation.js";
 
 class AssetFilepaths extends Application {
     constructor() {
@@ -22,6 +22,8 @@ class AssetFilepaths extends Application {
         this.context.currentSearchInput = this.currentSearchInput;
         this.context.searchText = this.searchText;
         this.context.replaceText = this.replaceText;
+        this.context.assetTypes = getAllAssetTypes();
+        this.context.singularType = this.singularType;
         this.context.assets = await getAllAssets(this.showInvalidOnly, this.searchText, this.singularType);
         return this.context;
     }
@@ -31,6 +33,11 @@ class AssetFilepaths extends Application {
 
         html.find('#toggle-invalid').change(async (event) => {
             this.showInvalidOnly = event.target.checked;
+            this.refresh(html);
+        });
+
+        html.find('#asset-type-dropdown').change((event) => {
+            this.singularType = event.target.value;
             this.refresh(html);
         });
 

@@ -29,6 +29,12 @@ let assetTypes = [
     { type: User, startAsset: "User", closure: user => [user] }
 ];
 
+function getAllAssetTypes() {
+    let types = assetTypes.map(assetType => assetType.type.name);
+    types.sort((a, b) => a.localeCompare(b));
+    return types;
+}
+
 function getAllAssetPointers(singularType) {
     let assets = assetTypes.map(assetType => {
         if (singularType && assetType.type.name !== singularType) {
@@ -292,4 +298,4 @@ function assetPointerToObject(asset, fileCache) {
     };
 }
 
-export { getAllAssets, getAssetPath, setAssetPath };
+export { getAllAssets, getAllAssetTypes, getAssetPath, setAssetPath };
