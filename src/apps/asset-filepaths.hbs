@@ -4,13 +4,22 @@
             <h1>{{title}}</h1>
             <div style="display: flex; align-items: center;">
                 <input type="text" class="search-input" value="{{searchText}}" />
+                <button type="button" class="delete-search-button" style="width: 25px; background: none; border: none;"
+                    disabled>
+                    <i class="fa fa-xmark"></i>
+                </button>
                 <button type="button" class="search-button" style="width: 25px; background: none; border: none;">
                     <i class="fa fa-search"></i>
                 </button>
             </div>
             <div style="display: flex; align-items: center;">
                 <input type="text" class="replace-input" />
-                <button type="button" class="replace-button" style="width: 25px; background: none; border: none;" disabled>
+                <button type="button" class="delete-replace-button" style="width: 25px; background: none; border: none;"
+                    disabled>
+                    <i class="fa fa-xmark"></i>
+                </button>
+                <button type="button" class="replace-button" style="width: 25px; background: none; border: none;"
+                    disabled>
                     <i class="fa fa-exchange"></i>
                 </button>
             </div>

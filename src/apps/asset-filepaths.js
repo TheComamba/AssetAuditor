@@ -30,6 +30,22 @@ class AssetFilepaths extends Application {
             this.render();
         });
 
+        html.find('.delete-search-button').click((event) => {
+            const button = $(event.currentTarget);
+            const input = button.siblings('.search-input');
+            input.val('');
+            this.searchText = '';
+            this.render();
+        });
+
+        html.find('.delete-replace-button').click((event) => {
+            const button = $(event.currentTarget);
+            const input = button.siblings('.replace-input');
+            input.val('');
+            this.replaceText = '';
+            this.render();
+        });
+
         html.find('.search-button').click((event) => {
             const button = $(event.currentTarget);
             const input = button.siblings('.search-input');
@@ -102,10 +118,23 @@ class AssetFilepaths extends Application {
         html.find('.search-input').on('input', (event) => {
             const input = $(event.currentTarget);
             const replaceButton = html.find('.replace-button');
+            const deleteInputButton = html.find('.delete-search-button');
             if (input.val().trim() !== '') {
                 replaceButton.prop('disabled', false);
+                deleteInputButton.prop('disabled', false);
             } else {
                 replaceButton.prop('disabled', true);
+                deleteInputButton.prop('disabled', true);
+            }
+        });
+
+        html.find('.replace-input').on('input', (event) => {
+            const input = $(event.currentTarget);
+            const deleteInputButton = html.find('.delete-replace-button');
+            if (input.val().trim() !== '') {
+                deleteInputButton.prop('disabled', false);
+            } else {
+                deleteInputButton.prop('disabled', true);
             }
         });
 
