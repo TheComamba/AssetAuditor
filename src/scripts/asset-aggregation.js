@@ -17,25 +17,27 @@ function getAssets(collectionName, extractAssets) {
 }
 
 let assetTypes = [
-    { type: "Actor", startAsset: "Actor", closure: actor => [actor] },
-    { type: "Item", startAsset: "Item", closure: item => [item] },
-    { type: "JournalEntryPage", startAsset: "JournalEntry", closure: journal => journal.pages },
-    { type: "PlaylistSound", startAsset: "Playlist", closure: playlist => playlist.sounds },
-    { type: "PrototypeToken", startAsset: "Actor", closure: actor => [actor.prototypeToken] },
-    { type: "Scene", startAsset: "Scene", closure: scene => [scene] },
-    { type: "Sound", startAsset: "Scene", closure: scene => scene.sounds },
-    { type: "Tile", startAsset: "Scene", closure: scene => scene.tiles },
-    { type: "Token", startAsset: "Scene", closure: scene => scene.tokens },
-    { type: "User", startAsset: "User", closure: user => [user] }
+    { type: Actor, startAsset: "Actor", closure: actor => [actor] },
+    { type: Item, startAsset: "Item", closure: item => [item] },
+    { type: JournalEntryPage, startAsset: "JournalEntry", closure: journal => journal.pages },
+    { type: PlaylistSound, startAsset: "Playlist", closure: playlist => playlist.sounds },
+    { type: foundry.data.PrototypeToken, startAsset: "Actor", closure: actor => [actor.prototypeToken] },
+    { type: Scene, startAsset: "Scene", closure: scene => [scene] },
+    { type: AmbientSoundDocument, startAsset: "Scene", closure: scene => scene.sounds },
+    { type: TileDocument, startAsset: "Scene", closure: scene => scene.tiles },
+    { type: TokenDocument, startAsset: "Scene", closure: scene => scene.tokens },
+    { type: User, startAsset: "User", closure: user => [user] }
 ];
 
 function getAllAssetPointers() {
-    return assetTypes.map(assetType => {
+    let assets = assetTypes.map(assetType => {
         return {
-            type: assetType.type,
+            type: assetType.type.name,
             collection: getAssets(assetType.startAsset, assetType.closure)
         };
     });
+    assets.sort((a, b) => a.type.localeCompare(b.type));
+    return assets;
 }
 
 const postedErrorMessages = new Set();
