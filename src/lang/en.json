@@ -5,5 +5,12 @@
     "asset_auditor.app.filter-assets": "Show only assets of type",
     "asset_auditor.app.invalid-only": "Show only invalid filepaths",
     "asset_auditor.app.last-valid-path": "Last valid path:",
+    "asset_auditor.app.delete-search-button": "Clear search field",
+    "asset_auditor.app.search-search-button": "Search assets",
+    "asset_auditor.app.delete-replace-button": "Clear replacement field",
+    "asset_auditor.app.replace-button": "Replace all",
+    "asset_auditor.app.reset-button": "Reset path modifications",
+    "asset_auditor.app.browse-button": "Browse for file",
+    "asset_auditor.app.update-button": "Save asset path",
     "asset_auditor.sidebar-not-found": "The game settings sidebar section could not be found in HTML. The assets button cannot be rendered."
 }
