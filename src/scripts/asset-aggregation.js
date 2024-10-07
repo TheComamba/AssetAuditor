@@ -35,12 +35,24 @@ function getAllAssetPointers() {
         collection: getAssets("Playlist", playlist => playlist.sounds)
     });
     assets.push({
+        type: "PrototypeToken",
+        collection: getAssets("Actor", actor => [actor]).map(actor => actor.prototypeToken)
+    });
+    assets.push({
         type: "Scene",
         collection: getAssets("Scene", scene => [scene])
     });
     assets.push({
+        type: "Sound",
+        collection: getAssets("Scene", scene => scene.sounds)
+    });
+    assets.push({
+        type: "Tile",
+        collection: getAssets("Scene", scene => scene.tiles)
+    });
+    assets.push({
         type: "Token",
-        collection: getAssets("Actor", actor => [actor]).map(actor => actor.prototypeToken)
+        collection: getAssets("Scene", scene => scene.tokens)
     });
     assets.push({
         type: "User",
@@ -61,11 +73,14 @@ function showAssetTypeError(typename) {
 
 const assetPathMap = new Map([
     [Actor, 'img'],
+    [AmbientSoundDocument, 'path'],
     [Item, 'img'],
     [JournalEntryPage, 'src'],
     [PlaylistSound, 'path'],
-    [Scene, 'background.src'],
     [foundry.data.PrototypeToken, 'texture.src'],
+    [Scene, 'background.src'],
+    [TileDocument, 'texture.src'],
+    [TokenDocument, 'texture.src'],
     [User, 'avatar']
 ]);
 
@@ -105,10 +120,19 @@ function getIcon(asset, isValid) {
     if (asset instanceof PlaylistSound) {
         return "fas fa-file-audio";
     }
+    if (asset instanceof foundry.data.PrototypeToken) {
+        return "fas fa-file-image";
+    }
     if (asset instanceof Scene) {
         return "fas fa-file-image";
     }
-    if (asset instanceof foundry.data.PrototypeToken) {
+    if (asset instanceof AmbientSoundDocument) {
+        return "fas fa-file-audio";
+    }
+    if (asset instanceof TileDocument) {
+        return "fas fa-file-image";
+    }
+    if (asset instanceof TokenDocument) {
         return "fas fa-file-image";
     }
     if (asset instanceof User) {
@@ -254,7 +278,7 @@ function assetPointerToObject(asset, fileCache) {
     if (id === null) {
         return null;
     }
-    const name = asset.name;
+    const name = asset.name ?? '';
     if (name === null) {
         return null;
     }
