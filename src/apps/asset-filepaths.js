@@ -6,6 +6,7 @@ class AssetFilepaths extends Application {
         this.context = {};
         this.showInvalidOnly = false;
         this.searchText = '';
+        this.replaceText = '';
     }
 
     get template() {
@@ -17,6 +18,7 @@ class AssetFilepaths extends Application {
         this.context.title = game.i18n.localize("asset_auditor.asset-filepaths");
         this.context.showInvalidOnly = this.showInvalidOnly
         this.context.searchText = this.searchText;
+        this.context.replaceText = this.replaceText;
         this.context.assets = await getAllAssets(this.showInvalidOnly, this.searchText);
         return this.context;
     }
@@ -35,20 +37,19 @@ class AssetFilepaths extends Application {
             this.render();
         });
 
-        html.find('.replace-button').click(async (event) => {
-            const button = $(event.currentTarget);
-            const input = button.siblings('.search-input');
-            const searchText = input.val();
-            const replaceText = input.siblings('.replace-input').val();
+        html.find('.replace-button').click(async (_event) => {
+            const searchInput = html.find('.search-input');
+            const replaceInput = html.find('.replace-input');
+            this.searchText = searchInput.val();
+            this.replaceText = replaceInput.val();
             const assets = this.context.assets.flatMap(assetMap => assetMap.assets.map(asset => asset.asset));
             for (const asset of assets) {
                 const currentPath = getAssetPath(asset);
-                if (currentPath.includes(searchText)) {
-                    const newPath = currentPath.replace(searchText, replaceText);
+                if (currentPath.includes(this.searchText)) {
+                    const newPath = currentPath.replace(this.searchText, this.replaceText);
                     await setAssetPath(asset, newPath);
                 }
             }
-            this.searchText = '';
             this.render();
         });
 

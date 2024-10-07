@@ -225,8 +225,8 @@ async function getAllAssets(invalidOnly = false, searchText = '') {
         }
 
         if (searchText) {
-            const search = searchText.toLowerCase();
-            mappedAssets = mappedAssets.filter(asset => asset.name.toLowerCase().includes(search) || asset.path.toLowerCase().includes(search));
+            const search = searchText;
+            mappedAssets = mappedAssets.filter(asset => asset.name.includes(search) || asset.path.includes(search));
         }
 
         mappedAssets.sort((a, b) => a.name.localeCompare(b.name));
