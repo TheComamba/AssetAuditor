@@ -34,42 +34,19 @@ class AssetFilepaths extends Application {
         });
 
         html.find('.delete-search-button').click((event) => {
-            const button = $(event.currentTarget);
-            const input = button.siblings('.search-input');
-            input.val('');
-            this.currentSearchInput = '';
-            this.searchText = '';
-            this.refresh(html);
+            this.performDeleteSearch(event, html);
         });
 
         html.find('.delete-replace-button').click((event) => {
-            const button = $(event.currentTarget);
-            const input = button.siblings('.replace-input');
-            input.val('');
-            this.replaceText = '';
-            this.refresh(html);
+            this.performDeleteReplace(event, html);
         });
 
-        html.find('.search-button').click((event) => {
-            const button = $(event.currentTarget);
-            this.searchText = this.currentSearchInput;
-            this.refresh(html);
+        html.find('.search-button').click((_event) => {
+            this.performSearch(html);
         });
 
         html.find('.replace-button').click(async (_event) => {
-            const searchInput = html.find('.search-input');
-            const replaceInput = html.find('.replace-input');
-            this.searchText = searchInput.val();
-            this.replaceText = replaceInput.val();
-            const assets = this.context.assets.flatMap(assetMap => assetMap.assets.map(asset => asset.asset));
-            for (const asset of assets) {
-                const currentPath = getAssetPath(asset);
-                if (currentPath.includes(this.searchText)) {
-                    const newPath = currentPath.replace(this.searchText, this.replaceText);
-                    await setAssetPath(asset, newPath);
-                }
-            }
-            this.refresh(html);
+            await this.performReplacement(html);
         });
 
         html.find('.update-button').click((event) => {
@@ -122,19 +99,70 @@ class AssetFilepaths extends Application {
             }
         });
 
-        html.find('.search-input').on('input', (event) => {
-            const input = $(event.currentTarget);
-            this.currentSearchInput = input.val();
-            this.updateOperability(html);
-        });
+        html.find('.search-input')
+            .on('input', (event) => {
+                const input = $(event.currentTarget);
+                this.currentSearchInput = input.val();
+                this.updateOperability(html);
+            })
+            .on('keydown', (event) => {
+                if (event.key === 'Enter') {
+                    this.performSearch(html);
+                } else if (event.key === 'Escape') {
+                    this.performDeleteSearch(event, html);
+                }
+            });
 
-        html.find('.replace-input').on('input', (event) => {
-            const input = $(event.currentTarget);
-            this.replaceText = input.val();
-            this.updateOperability(html);
-        });
+        html.find('.replace-input')
+            .on('input', (event) => {
+                const input = $(event.currentTarget);
+                this.replaceText = input.val();
+                this.updateOperability(html);
+            })
+            .on('keydown', async (event) => {
+                if (event.key === 'Enter') {
+                    await this.performReplacement(html);
+                } else if (event.key === 'Escape') {
+                    this.performDeleteReplace(event, html);
+                }
+            });
 
         this.updateOperability(html);
+    }
+
+    performDeleteReplace(event, html) {
+        const button = $(event.currentTarget);
+        const input = button.siblings('.replace-input');
+        input.val('');
+        this.replaceText = '';
+        this.refresh(html);
+    }
+
+    performDeleteSearch(event, html) {
+        const button = $(event.currentTarget);
+        const input = button.siblings('.search-input');
+        input.val('');
+        this.currentSearchInput = '';
+        this.searchText = '';
+        this.refresh(html);
+    }
+
+    async performReplacement(html) {
+        this.searchText = this.currentSearchInput;
+        const assets = this.context.assets.flatMap(assetMap => assetMap.assets.map(asset => asset.asset));
+        for (const asset of assets) {
+            const currentPath = getAssetPath(asset);
+            if (currentPath.includes(this.searchText)) {
+                const newPath = currentPath.replace(this.searchText, this.replaceText);
+                await setAssetPath(asset, newPath);
+            }
+        }
+        this.refresh(html);
+    }
+
+    performSearch(html) {
+        this.searchText = this.currentSearchInput;
+        this.refresh(html);
     }
 
     refresh(html) {
