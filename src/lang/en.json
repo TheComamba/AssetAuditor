@@ -12,6 +12,7 @@
     "asset_auditor.app.reset-button": "Reset path modifications",
     "asset_auditor.app.browse-button": "Browse for file",
     "asset_auditor.app.update-button": "Save asset path",
+    "asset_auditor.invalid-assets-found": "Asset Auditor found {count} invalid filepaths.",
     "asset_auditor.settings.run-on-startup": "Run asset audit on startup",
     "asset_auditor.settings.run-on-startup-hint": "This will run the asset audit on startup and display an error message if any invalid filepaths are found.",
     "asset_auditor.sidebar-not-found": "The game settings sidebar section could not be found in HTML. The assets button cannot be rendered."
