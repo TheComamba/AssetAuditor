@@ -23,7 +23,7 @@
             </div>
             <div style="display: flex; align-items: center;">
                 <span style="margin-right: 10px;">
-                    {{localize "asset_auditor.asset-filepaths-app.filterAssets"}}
+                    {{localize "asset_auditor.app.filter-assets"}}
                 </span>
                 <select id="asset-type-dropdown" style="margin-right: 20px;">
                     <option value=""></option>
@@ -33,7 +33,7 @@
                 </select>
                 <input type="checkbox" id="toggle-invalid" {{#if showInvalidOnly}}checked{{/if}} />
                 <span>
-                    {{localize "asset_auditor.asset-filepaths-app.invalidOnly"}}
+                    {{localize "asset_auditor.app.invalid-only"}}
                 </span>
             </div>
         </header>
@@ -65,7 +65,7 @@
             {{#unless asset.isValid}}
             <div style="margin-bottom: 10px;">
                 <span style="width: 165px; text-align: right; display: inline-block; margin-right: 10px;">{{localize
-                    "asset_auditor.asset-filepaths-app.lastValidPath"}}</span>
+                    "asset_auditor.app.last-valid-path"}}</span>
                 <span style="width: 750px; text-align: left; display: inline-block;">{{asset.lastValidPath}}</span>
             </div>
             {{/unless}}
