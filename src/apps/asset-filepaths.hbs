@@ -49,6 +49,10 @@
                 <span style="width: 150px;">{{asset.name}}</span>
                 <input type="text" value="{{asset.path}}" data-original-value="{{asset.path}}" class="path-input"
                     style="width: 750px;" />
+                <button type="button" class="reset-button" data-asset-id="{{asset.id}}"
+                    style="width: 25px; background: none; border: none; opacity: 0;" disabled>
+                    <i class="fa fa-undo"></i>
+                </button>
                 <button type="button" class="browse-button" data-asset-id="{{asset.id}}"
                     style="width: 25px; background: none; border: none;">
                     <i class="fa fa-folder-open"></i>
