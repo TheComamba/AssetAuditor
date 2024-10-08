@@ -36,7 +36,11 @@ In the module settings a checkbox can be ticked to run a check of all asset file
 
 ## Contributing
 
-TODO
+Asset Auditor is feature complete in my opinion. If you disagree, either because you are missing some functionality, because I have overlooked an asset type, or because you suspect a bug, please let me know by [creating an issue](https://github.com/TheComamba/AssetAuditor/issues).
+
+I am also open to pull requests.
+
+If you want to add a new language, add a file called `src/lang/<new-lang>.json`, where `<new-lang>` is the corresponding [two-letter ISO 639-1 language code](https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes). In `src/module.json`, add a new entry in the `"languages"` array. Running `foundry_scripts/check_localizations_consistency.sh` will list all keys that are not translated into your language. It will also discover some typos.
 
 ## Manual Installation
 
