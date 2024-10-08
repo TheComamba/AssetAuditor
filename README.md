@@ -44,12 +44,12 @@ If you want to add a new language, add a file called `src/lang/<new-lang>.json`,
 
 ## Manual Installation
 
-To manually install Asset Auditor (e.g. for development), copy the src/ folder of this repository to the {userData}/Data/modules/ folder of Foundry, and then rename it to 'asset_auditor' (the id declared in module.json).
+To manually install Asset Auditor (e.g. for development), copy the src/ folder of this repository to the {userData}/Data/modules/ folder of Foundry, and then rename it to 'asset-auditor' (the id declared in module.json).
 
 On POSIX compliant operating systems like Linux and Mac you can alternatively use a symbolic link. It can be created via e.g.
 
 ```bash
-ln -s {folder containing git repo}/AssetAuditor/src {Foundry user data}/Data/modules/asset_auditor
+ln -s {folder containing git repo}/AssetAuditor/src {Foundry user data}/Data/modules/asset-auditor
 ```
 
 ## License

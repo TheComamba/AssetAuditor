@@ -2,9 +2,9 @@ import { AssetFilepaths } from "../apps/asset-filepaths.js";
 import { getAllAssets } from "./asset-aggregation.js";
 
 Hooks.once('init', function () {
-    game.settings.register("asset_auditor", "runOnStartup", {
-        name: game.i18n.localize("asset_auditor.settings.run-on-startup"),
-        hint: game.i18n.localize("asset_auditor.settings.run-on-startup-hint"),
+    game.settings.register("asset-auditor", "runOnStartup", {
+        name: game.i18n.localize("asset-auditor.settings.run-on-startup"),
+        hint: game.i18n.localize("asset-auditor.settings.run-on-startup-hint"),
         scope: "world",
         config: true,
         type: Boolean,
@@ -13,11 +13,11 @@ Hooks.once('init', function () {
 });
 
 Hooks.once('ready', async function () {
-    if (game.settings.get("asset_auditor", "runOnStartup")) {
+    if (game.settings.get("asset-auditor", "runOnStartup")) {
         const invalidAssetTypes = await getAllAssets(true, '', '');
         const invalidAssets = invalidAssetTypes.flatMap(assetType => assetType.assets);
         if (invalidAssets.length > 0) {
-            const errorMessage = game.i18n.format("asset_auditor.invalid-assets-found", { count: invalidAssets.length });
+            const errorMessage = game.i18n.format("asset-auditor.invalid-assets-found", { count: invalidAssets.length });
             ui.notifications.error(errorMessage);
         }
     }
@@ -25,7 +25,7 @@ Hooks.once('ready', async function () {
 
 Hooks.on("renderSidebarTab", async (app, html) => {
     if (app instanceof Settings) {
-        let button_text = game.i18n.localize("asset_auditor.asset-filepaths");
+        let button_text = game.i18n.localize("asset-auditor.asset-filepaths");
         let button = $(`<button class='asset-list'><i class='fas fa-file-edit'></i> ${button_text}</button>`)
 
         button.click(function () {
@@ -34,7 +34,7 @@ Hooks.on("renderSidebarTab", async (app, html) => {
 
         let settings_sidebar = html.find("div#settings-game");
         if (settings_sidebar.length == 0) {
-            ui.notifications.error(game.i18n.localize("asset_auditor.sidebar-not-found"));
+            ui.notifications.error(game.i18n.localize("asset-auditor.sidebar-not-found"));
             return;
         }
         settings_sidebar.append(button);

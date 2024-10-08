@@ -5,10 +5,10 @@
             <div style="display: flex; align-items: center;">
                 <input type="text" class="search-input" value="{{currentSearchInput}}" />
                 <button type="button" class="delete-search-button" title="{{localize "
-                    asset_auditor.app.delete-search-button" }}" style="width: 25px; background: none; border: none;">
+                    asset-auditor.app.delete-search-button" }}" style="width: 25px; background: none; border: none;">
                     <i class="fa fa-xmark"></i>
                 </button>
-                <button type="button" class="search-button" title="{{localize " asset_auditor.app.search-search-button"
+                <button type="button" class="search-button" title="{{localize " asset-auditor.app.search-search-button"
                     }}" style="width: 25px; background: none; border: none;">
                     <i class="fa fa-search"></i>
                 </button>
@@ -16,17 +16,17 @@
             <div style="display: flex; align-items: center;">
                 <input type="text" class="replace-input" value="{{replaceText}}" />
                 <button type="button" class="delete-replace-button" title="{{localize "
-                    asset_auditor.app.delete-replace-button" }}" style="width: 25px; background: none; border: none;">
+                    asset-auditor.app.delete-replace-button" }}" style="width: 25px; background: none; border: none;">
                     <i class="fa fa-xmark"></i>
                 </button>
-                <button type="button" class="replace-button" title="{{localize " asset_auditor.app.replace-button" }}"
+                <button type="button" class="replace-button" title="{{localize " asset-auditor.app.replace-button" }}"
                     style="width: 25px; background: none; border: none;">
                     <i class="fa fa-exchange"></i>
                 </button>
             </div>
             <div style="display: flex; align-items: center;">
                 <span style="margin-right: 10px;">
-                    {{localize "asset_auditor.app.filter-assets"}}
+                    {{localize "asset-auditor.app.filter-assets"}}
                 </span>
                 <select id="asset-type-dropdown" style="margin-right: 20px;">
                     <option value=""></option>
@@ -36,7 +36,7 @@
                 </select>
                 <input type="checkbox" id="toggle-invalid" {{#if showInvalidOnly}}checked{{/if}} />
                 <span>
-                    {{localize "asset_auditor.app.invalid-only"}}
+                    {{localize "asset-auditor.app.invalid-only"}}
                 </span>
             </div>
         </header>
@@ -52,16 +52,16 @@
                 <span style="width: 150px;">{{asset.name}}</span>
                 <input type="text" value="{{asset.path}}" data-original-value="{{asset.path}}" class="path-input"
                     style="width: 750px;" />
-                <button type="button" class="reset-button" title="{{localize " asset_auditor.app.reset-button" }}"
+                <button type="button" class="reset-button" title="{{localize " asset-auditor.app.reset-button" }}"
                     data-asset-id="{{asset.id}}" style="width: 25px; background: none; border: none; opacity: 0;"
                     disabled>
                     <i class="fa fa-undo"></i>
                 </button>
-                <button type="button" class="browse-button" title="{{localize " asset_auditor.app.browse-button" }}"
+                <button type="button" class="browse-button" title="{{localize " asset-auditor.app.browse-button" }}"
                     data-asset-id="{{asset.id}}" style="width: 25px; background: none; border: none;">
                     <i class="fa fa-folder-open"></i>
                 </button>
-                <button type="button" class="update-button" title="{{localize " asset_auditor.app.update-button" }}"
+                <button type="button" class="update-button" title="{{localize " asset-auditor.app.update-button" }}"
                     data-asset-id="{{asset.id}}" style="width: 25px; background: none; border: none; opacity: 0;"
                     disabled>
                     <i class="fa fa-save"></i>
@@ -70,7 +70,7 @@
             {{#unless asset.isValid}}
             <div style="margin-bottom: 10px;">
                 <span style="width: 165px; text-align: right; display: inline-block; margin-right: 10px;">{{localize
-                    "asset_auditor.app.last-valid-path"}}</span>
+                    "asset-auditor.app.last-valid-path"}}</span>
                 <span style="width: 750px; text-align: left; display: inline-block;">{{asset.lastValidPath}}</span>
             </div>
             {{/unless}}

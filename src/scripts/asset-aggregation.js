@@ -63,7 +63,7 @@ function getAllAssetPointers(singularType) {
 const postedErrorMessages = new Set();
 
 function showAssetTypeError(typename) {
-    const message = game.i18n.format("asset_auditor.asset-aggregation.type-error", { type: typename });
+    const message = game.i18n.format("asset-auditor.asset-aggregation.type-error", { type: typename });
     if (!postedErrorMessages.has(message)) {
         ui.notifications.error(message);
         postedErrorMessages.add(message);
