@@ -264,19 +264,19 @@ function assetPointerToObject(asset, fileCache) {
         return null;
     }
     const id = asset._id;
-    if (id === null) {
+    if (!id) {
         return null;
     }
     const name = asset.name ?? '';
-    if (name === null) {
+    if (!name) {
         return null;
     }
     const path = getAssetPath(asset);
-    if (path === null || path.startsWith("icons/")) {
+    if (!path || path.startsWith("icons/")) {
         return null;
     }
     const type = asset.constructor.name;
-    if (type === null) {
+    if (!type) {
         return null;
     }
     const isValid = isValidPath(path, fileCache);
@@ -284,7 +284,7 @@ function assetPointerToObject(asset, fileCache) {
         return null;
     }
     const icon = getIcon(asset, isValid);
-    if (icon === null) {
+    if (!icon) {
         return null;
     }
     return {
