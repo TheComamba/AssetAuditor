@@ -1,3 +1,9 @@
+const constructedIdMarker = "_ID_GENERATED_BY_ASSET_AUDITOR";
+
+function isIdConstructed(id) {
+    return id.includes(constructedIdMarker);
+}
+
 function getAssets(collectionName, extractAssets) {
     const assets = [];
     const assetIds = new Set();
@@ -5,6 +11,10 @@ function getAssets(collectionName, extractAssets) {
 
     collection.forEach(item => {
         const items = extractAssets(item);
+        if (items.length === 1 && !items[0]._id) {
+            const constructedId = item._id + "_" + items[0].constructor.name + constructedIdMarker;
+            items[0]._id = constructedId;
+        }
         items.forEach(asset => {
             if (!assetIds.has(asset._id)) {
                 assets.push(asset);
@@ -266,6 +276,9 @@ function assetPointerToObject(asset, fileCache) {
     const id = asset._id;
     if (!id) {
         return null;
+    }
+    if (isIdConstructed(id)) {
+        asset._id = null;
     }
     const name = asset.name ?? '';
     if (!name) {
