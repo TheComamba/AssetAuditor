@@ -18,7 +18,7 @@ function getAssets(collectionName, extractAssets) {
 
 let assetTypes = [
     { type: Actor, startAsset: "Actor", closure: actor => [actor] },
-    { type: Item, startAsset: "Item", closure: item => [item] },
+    { type: Item, startAsset: "Actor", closure: actor => actor.items },
     { type: JournalEntryPage, startAsset: "JournalEntry", closure: journal => journal.pages },
     { type: PlaylistSound, startAsset: "Playlist", closure: playlist => playlist.sounds },
     { type: foundry.data.PrototypeToken, startAsset: "Actor", closure: actor => [actor.prototypeToken] },
