@@ -1,3 +1,9 @@
+const constructedIdMarker = "_ID_GENERATED_BY_ASSET_AUDITOR";
+
+function isIdConstructed(id) {
+    return id.includes(constructedIdMarker);
+}
+
 function getAssets(collectionName, extractAssets) {
     const assets = [];
     const assetIds = new Set();
@@ -5,6 +11,10 @@ function getAssets(collectionName, extractAssets) {
 
     collection.forEach(item => {
         const items = extractAssets(item);
+        if (items.length === 1 && !items[0]._id) {
+            const constructedId = item._id + "_" + items[0].constructor.name + constructedIdMarker;
+            items[0]._id = constructedId;
+        }
         items.forEach(asset => {
             if (!assetIds.has(asset._id)) {
                 assets.push(asset);
@@ -18,7 +28,7 @@ function getAssets(collectionName, extractAssets) {
 
 let assetTypes = [
     { type: Actor, startAsset: "Actor", closure: actor => [actor] },
-    { type: Item, startAsset: "Item", closure: item => [item] },
+    { type: Item, startAsset: "Actor", closure: actor => actor.items },
     { type: JournalEntryPage, startAsset: "JournalEntry", closure: journal => journal.pages },
     { type: PlaylistSound, startAsset: "Playlist", closure: playlist => playlist.sounds },
     { type: foundry.data.PrototypeToken, startAsset: "Actor", closure: actor => [actor.prototypeToken] },
@@ -264,19 +274,22 @@ function assetPointerToObject(asset, fileCache) {
         return null;
     }
     const id = asset._id;
-    if (id === null) {
+    if (!id) {
         return null;
     }
+    if (isIdConstructed(id)) {
+        asset._id = null;
+    }
     const name = asset.name ?? '';
-    if (name === null) {
+    if (!name) {
         return null;
     }
     const path = getAssetPath(asset);
-    if (path === null || path.startsWith("icons/")) {
+    if (!path || path.startsWith("icons/")) {
         return null;
     }
     const type = asset.constructor.name;
-    if (type === null) {
+    if (!type) {
         return null;
     }
     const isValid = isValidPath(path, fileCache);
@@ -284,7 +297,7 @@ function assetPointerToObject(asset, fileCache) {
         return null;
     }
     const icon = getIcon(asset, isValid);
-    if (icon === null) {
+    if (!icon) {
         return null;
     }
     return {

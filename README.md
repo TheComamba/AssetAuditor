@@ -36,7 +36,7 @@ In the module settings a checkbox can be ticked to run a check of all asset file
 
 ## Contributing
 
-Asset Auditor is feature complete in my opinion. If you disagree, either because you are missing some functionality, because I have overlooked an asset type, or because you suspect a bug, please let me know by [creating an issue](https://github.com/TheComamba/AssetAuditor/issues).
+Asset Auditor is very close to feature complete in my opinion. If you disagree, either because you are missing some functionality, because I have overlooked an asset type, or because you suspect a bug, please let me know by [creating an issue](https://github.com/TheComamba/AssetAuditor/issues). Also have a look at the existing issues and let me know if you want me to prioritize one of them.
 
 I am also open to pull requests.
 

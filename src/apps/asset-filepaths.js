@@ -57,13 +57,13 @@ class AssetFilepaths extends Application {
             await this.performReplacement(html);
         });
 
-        html.find('.update-button').click((event) => {
+        html.find('.update-button').click(async (event) => {
             const updateButton = $(event.currentTarget);
             const resetButton = updateButton.siblings('.reset-button');
             const input = updateButton.siblings('.path-input');
             const inputValue = input.val();
             const assetId = updateButton.data('asset-id');
-            this.updateAssetPath(assetId, inputValue);
+            await this.updateAssetPath(assetId, inputValue);
             input.data('original-value', inputValue);
             resetButton.css('opacity', 0);
             resetButton.prop('disabled', true);
@@ -98,9 +98,9 @@ class AssetFilepaths extends Application {
             const filePicker = new FilePicker({
                 type: 'any',
                 current: lastValidPath,
-                callback: (path) => {
+                callback: async (path) => {
                     input.val(path);
-                    this.updateAssetPath(assetId, path);
+                    await this.updateAssetPath(assetId, path);
                     input.data('original-value', path);
                     const resetButton = browseButton.siblings('.reset-button');
                     const updateBurron = browseButton.siblings('.update-button');
@@ -248,7 +248,6 @@ class AssetFilepaths extends Application {
             return;
         }
         await setAssetPath(asset.asset, inputValue);
-        this.render();
     };
 }
 
