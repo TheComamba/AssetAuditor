@@ -46,7 +46,7 @@ def manifest_url(version):
 
 def release_notes_url(version):
     project_name = get_project_name()
-    return f"https://github.com/{project_name}/blob/v{version}/release_notes/{version}.md"
+    return f"https://github.com/TheComamba/{project_name}/blob/v{version}/release_notes/{version}.md"
     
 def get_data(manifest):
     version = manifest.get("version")
