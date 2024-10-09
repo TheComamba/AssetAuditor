@@ -42,7 +42,7 @@ def get_project_name():
 
 def manifest_url(version):
     project_name = get_project_name()
-    return f"https://raw.githubusercontent.com/{project_name}/v{version}/src/module.json"
+    return f"https://raw.githubusercontent.com/TheComamba/{project_name}/refs/tags/v{version}/src/module.json"
 
 def release_notes_url(version):
     project_name = get_project_name()
