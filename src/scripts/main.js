@@ -1,6 +1,10 @@
 import { AssetFilepaths } from "../apps/asset-filepaths.js";
 import { getAllAssets } from "./asset-aggregation.js";
 
+function isUserPermitted() {
+    return game.user.role >= CONST.USER_ROLES.ASSISTANT;
+}
+
 Hooks.once('init', function () {
     game.settings.register("asset-auditor", "runOnStartup", {
         name: game.i18n.localize("asset-auditor.settings.run-on-startup"),
@@ -13,6 +17,9 @@ Hooks.once('init', function () {
 });
 
 Hooks.once('ready', async function () {
+    if (!isUserPermitted()) {
+        return;
+    }
     if (game.settings.get("asset-auditor", "runOnStartup")) {
         const invalidAssetTypes = await getAllAssets(true, '', '');
         const invalidAssets = invalidAssetTypes.flatMap(assetType => assetType.assets);
@@ -24,6 +31,9 @@ Hooks.once('ready', async function () {
 });
 
 Hooks.on("renderSidebarTab", async (app, html) => {
+    if (!isUserPermitted()) {
+        return;
+    }
     if (app instanceof Settings) {
         let button_text = game.i18n.localize("asset-auditor.asset-filepaths");
         let button = $(`<button class='asset-list'><i class='fas fa-file-edit'></i> ${button_text}</button>`)
