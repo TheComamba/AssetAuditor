@@ -1,4 +1,5 @@
 const constructedIdMarker = "_ID_GENERATED_BY_ASSET_AUDITOR";
+const domainCache = {};
 
 function isIdConstructed(id) {
     return id.includes(constructedIdMarker);
@@ -205,12 +206,20 @@ function isValidLocalPath(path, fileCache) {
 // Checking the full path is not possible due to CORS issues,
 // so checking if the domain is valid will need to suffice.
 async function isValidHttpDomain(path) {
+    const url = new URL(path);
+    const domain = url.origin;
+    if (domainCache[domain] !== undefined) {
+        return domainCache[domain];
+    }
+    let isValid;
     try {
         await fetch(path, { method: 'HEAD', mode: 'no-cors' });
-        return true;
+        isValid = true;
     } catch (error) {
-        return false;
+        isValid = false;
     }
+    domainCache[domain] = isValid;
+    return isValid;
 }
 
 async function dirExists(dir) {
