@@ -253,10 +253,12 @@ async function getAllAssets(invalidOnly, searchText, singularType) {
     const pointerGroups = getAllAssetPointers(singularType);
     const assetDirs = collectAssetDirectories(pointerGroups);
     const fileCache = await initializeFileCache(assetDirs);
-    let assets = pointerGroups.map(group => {
-        let mappedAssets = group.collection.map(async asset => {
+    let assetPromises = pointerGroups.map(async group => {
+        let mappedAssetPromises = group.collection.map(async asset => {
             return await assetPointerToObject(asset, fileCache);
         });
+
+        let mappedAssets = await Promise.all(mappedAssetPromises);
 
         mappedAssets = mappedAssets.filter(item => item !== null);
 
@@ -276,6 +278,8 @@ async function getAllAssets(invalidOnly, searchText, singularType) {
             assets: mappedAssets
         };
     });
+
+    let assets = await Promise.all(assetPromises);
 
     await addLastValidPathsToInvalidAssets(assets);
 
