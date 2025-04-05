@@ -187,11 +187,28 @@ function isFileContained(file, files) {
     return false;
 }
 
-function isValidPath(path, fileCache) {
+async function isValidPath(path, fileCache) {
+    if (path.startsWith("http://") || path.startsWith("https://")) {
+        return await isValidHttpPath(path);
+    } else {
+        return isValidLocalPath(path, fileCache);
+    }
+}
+
+function isValidLocalPath(path, fileCache) {
     const dirIndex = path.lastIndexOf('/');
     const dir = dirIndex !== -1 ? path.substring(0, dirIndex) : '';
     const files = fileCache[dir];
     return isFileContained(path, files);
+}
+
+async function isValidHttpPath(path) {
+    try {
+        const response = await fetch(path, { method: 'HEAD', mode: 'no-cors' });
+        return response.ok;
+    } catch (error) {
+        return false;
+    }
 }
 
 async function dirExists(dir) {
@@ -237,8 +254,8 @@ async function getAllAssets(invalidOnly, searchText, singularType) {
     const assetDirs = collectAssetDirectories(pointerGroups);
     const fileCache = await initializeFileCache(assetDirs);
     let assets = pointerGroups.map(group => {
-        let mappedAssets = group.collection.map(asset => {
-            return assetPointerToObject(asset, fileCache);
+        let mappedAssets = group.collection.map(async asset => {
+            return await assetPointerToObject(asset, fileCache);
         });
 
         mappedAssets = mappedAssets.filter(item => item !== null);
@@ -269,7 +286,7 @@ async function getAllAssets(invalidOnly, searchText, singularType) {
     return assets;
 }
 
-function assetPointerToObject(asset, fileCache) {
+async function assetPointerToObject(asset, fileCache) {
     if (!asset) {
         return null;
     }
@@ -292,7 +309,7 @@ function assetPointerToObject(asset, fileCache) {
     if (!type) {
         return null;
     }
-    const isValid = isValidPath(path, fileCache);
+    const isValid = await isValidPath(path, fileCache);
     if (isValid === null) {
         return null;
     }
