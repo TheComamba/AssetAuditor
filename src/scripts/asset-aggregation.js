@@ -1,5 +1,17 @@
 const constructedIdMarker = "_ID_GENERATED_BY_ASSET_AUDITOR";
 const domainCache = {};
+let isWindowsPlatform;
+
+async function isWindows() {
+    if (navigator.userAgentData) {
+        const hints = ["platform"];
+        let data = await navigator.userAgentData.getHighEntropyValues(hints);
+        return data.platform === "Win32" || data.platform === "Windows";
+    } else {
+        console.log("User agent data not available.");
+        return false;
+    }
+}
 
 function isIdConstructed(id) {
     return id.includes(constructedIdMarker);
@@ -158,11 +170,15 @@ function collectAssetDirectories(pointerGroups) {
 }
 
 async function initializeFileCache(assetDirs) {
+    isWindowsPlatform = await isWindows();
     const fileCache = {};
     for (const dir of assetDirs) {
         if (!fileCache.hasOwnProperty(dir)) {
             try {
                 const fileResult = await FilePicker.browse("data", dir);
+                if (isWindowsPlatform) {
+                    fileResult.files = fileResult.files.map(file => file.toLowerCase());
+                }
                 fileCache[dir] = fileResult.files;
             } catch (error) {
                 fileCache[dir] = [];
@@ -197,8 +213,12 @@ async function isValidPath(path, fileCache) {
 }
 
 function isValidLocalPath(path, fileCache) {
+    if (isWindowsPlatform) {
+        path = path.toLowerCase();
+    }
+
     const dirIndex = path.lastIndexOf('/');
-    const dir = dirIndex !== -1 ? path.substring(0, dirIndex) : '';
+    let dir = dirIndex !== -1 ? path.substring(0, dirIndex) : '';
     const files = fileCache[dir];
     return isFileContained(path, files);
 }
