@@ -29,8 +29,8 @@
     }
   ],
   "url": "https://github.com/TheComamba/AssetAuditor",
-  "manifest": "https://raw.githubusercontent.com/TheComamba/AssetAuditor/v1.0.0/src/module.json",
-  "download": "https://github.com/TheComamba/AssetAuditor/archive/refs/tags/v1.0.0.zip",
+  "manifest": "https://raw.githubusercontent.com/TheComamba/AssetAuditor/v1.1.0/src/module.json",
+  "download": "https://github.com/TheComamba/AssetAuditor/archive/refs/tags/v1.1.0.zip",
   "bugs": "https://github.com/TheComamba/AssetAuditor/issues",
-  "readme": "https://github.com/TheComamba/AssetAuditor/blob/v1.0.0/README.md"
+  "readme": "https://github.com/TheComamba/AssetAuditor/blob/v1.1.0/README.md"
 }
