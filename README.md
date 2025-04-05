@@ -16,6 +16,8 @@ It opens a list of all assets, sorted by type and name.
 
 Any assets whose paths could not be located are marked by red color and a different icon. Furthermore, the last path in the directory tree that could be validated is displayed below it, to ease locating the problem.
 
+Online resources, i.e. paths beginning with "http://" or "https://" are also checked for validity, but only on the domain level. Checking if the complete URL is valid is prevented by Foundry's CORS policy.
+
 Klicking the browse button opens a file browser. In case of invalid paths it opens it at the last valid path.
 
 Alternatively, the path can be edited in place. It can then either be reset or saved by the corresponding icons.

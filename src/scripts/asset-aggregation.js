@@ -1,4 +1,5 @@
 const constructedIdMarker = "_ID_GENERATED_BY_ASSET_AUDITOR";
+const domainCache = {};
 
 function isIdConstructed(id) {
     return id.includes(constructedIdMarker);
@@ -187,11 +188,38 @@ function isFileContained(file, files) {
     return false;
 }
 
-function isValidPath(path, fileCache) {
+async function isValidPath(path, fileCache) {
+    if (path.startsWith("http://") || path.startsWith("https://")) {
+        return await isValidHttpDomain(path);
+    } else {
+        return isValidLocalPath(path, fileCache);
+    }
+}
+
+function isValidLocalPath(path, fileCache) {
     const dirIndex = path.lastIndexOf('/');
     const dir = dirIndex !== -1 ? path.substring(0, dirIndex) : '';
     const files = fileCache[dir];
     return isFileContained(path, files);
+}
+
+// Checking the full path is not possible due to CORS issues,
+// so checking if the domain is valid will need to suffice.
+async function isValidHttpDomain(path) {
+    const url = new URL(path);
+    const domain = url.origin;
+    if (domainCache[domain] !== undefined) {
+        return domainCache[domain];
+    }
+    let isValid;
+    try {
+        await fetch(path, { method: 'HEAD', mode: 'no-cors' });
+        isValid = true;
+    } catch (error) {
+        isValid = false;
+    }
+    domainCache[domain] = isValid;
+    return isValid;
 }
 
 async function dirExists(dir) {
@@ -236,10 +264,12 @@ async function getAllAssets(invalidOnly, searchText, singularType) {
     const pointerGroups = getAllAssetPointers(singularType);
     const assetDirs = collectAssetDirectories(pointerGroups);
     const fileCache = await initializeFileCache(assetDirs);
-    let assets = pointerGroups.map(group => {
-        let mappedAssets = group.collection.map(asset => {
-            return assetPointerToObject(asset, fileCache);
+    let assetPromises = pointerGroups.map(async group => {
+        let mappedAssetPromises = group.collection.map(async asset => {
+            return await assetPointerToObject(asset, fileCache);
         });
+
+        let mappedAssets = await Promise.all(mappedAssetPromises);
 
         mappedAssets = mappedAssets.filter(item => item !== null);
 
@@ -260,6 +290,8 @@ async function getAllAssets(invalidOnly, searchText, singularType) {
         };
     });
 
+    let assets = await Promise.all(assetPromises);
+
     await addLastValidPathsToInvalidAssets(assets);
 
     assets.sort((a, b) => a.type.localeCompare(b.type));
@@ -269,7 +301,7 @@ async function getAllAssets(invalidOnly, searchText, singularType) {
     return assets;
 }
 
-function assetPointerToObject(asset, fileCache) {
+async function assetPointerToObject(asset, fileCache) {
     if (!asset) {
         return null;
     }
@@ -292,7 +324,7 @@ function assetPointerToObject(asset, fileCache) {
     if (!type) {
         return null;
     }
-    const isValid = isValidPath(path, fileCache);
+    const isValid = await isValidPath(path, fileCache);
     if (isValid === null) {
         return null;
     }
