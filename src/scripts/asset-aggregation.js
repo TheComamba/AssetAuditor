@@ -172,15 +172,22 @@ function collectAssetDirectories(pointerGroups) {
 async function initializeFileCache(assetDirs) {
     isWindowsPlatform = await isWindows();
     const fileCache = {};
-    for (const dir of assetDirs) {
+    for (let dir of assetDirs) {
+        if (isUrl(dir)) {
+            continue;
+        }
         if (!fileCache.hasOwnProperty(dir)) {
             try {
                 const fileResult = await FilePicker.browse("data", dir);
                 if (isWindowsPlatform) {
+                    dir = dir.toLowerCase();
                     fileResult.files = fileResult.files.map(file => file.toLowerCase());
                 }
                 fileCache[dir] = fileResult.files;
             } catch (error) {
+                if (isWindowsPlatform) {
+                    dir = dir.toLowerCase();
+                }
                 fileCache[dir] = [];
             }
         }
@@ -191,6 +198,9 @@ async function initializeFileCache(assetDirs) {
 function isFileContained(file, files) {
     while (file.startsWith('/')) {
         file = file.substring(1);
+    }
+    if (isWindowsPlatform) {
+        file = file.toLowerCase();
     }
     if (files.includes(file)) {
         return true;
@@ -204,8 +214,12 @@ function isFileContained(file, files) {
     return false;
 }
 
+function isUrl(path) {
+    return path.startsWith("http://") || path.startsWith("https://");
+}
+
 async function isValidPath(path, fileCache) {
-    if (path.startsWith("http://") || path.startsWith("https://")) {
+    if (isUrl(path)) {
         return await isValidHttpDomain(path);
     } else {
         return isValidLocalPath(path, fileCache);
