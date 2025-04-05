@@ -189,7 +189,7 @@ function isFileContained(file, files) {
 
 async function isValidPath(path, fileCache) {
     if (path.startsWith("http://") || path.startsWith("https://")) {
-        return await isValidHttpPath(path);
+        return await isValidHttpDomain(path);
     } else {
         return isValidLocalPath(path, fileCache);
     }
@@ -202,10 +202,12 @@ function isValidLocalPath(path, fileCache) {
     return isFileContained(path, files);
 }
 
-async function isValidHttpPath(path) {
+// Checking the full path is not possible due to CORS issues,
+// so checking if the domain is valid will need to suffice.
+async function isValidHttpDomain(path) {
     try {
-        const response = await fetch(path, { method: 'HEAD', mode: 'no-cors' });
-        return response.ok;
+        await fetch(path, { method: 'HEAD', mode: 'no-cors' });
+        return true;
     } catch (error) {
         return false;
     }
