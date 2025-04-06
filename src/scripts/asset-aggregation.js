@@ -13,6 +13,7 @@ async function isWindows() {
     }
 }
 
+
 function isIdConstructed(id) {
     return id.includes(constructedIdMarker);
 }
@@ -222,19 +223,36 @@ async function isValidPath(path, fileCache) {
     if (isUrl(path)) {
         return await isValidHttpDomain(path);
     } else {
-        return isValidLocalPath(path, fileCache);
+        return await isValidLocalPath(path, fileCache);
     }
 }
 
-function isValidLocalPath(path, fileCache) {
+async function isValidLocalPath(path, fileCache) {
     if (isWindowsPlatform) {
         path = path.toLowerCase();
+    }
+
+    if (containsWildcard(path)) {
+        return await wildcardExpandsToAtLeastOne(path);
     }
 
     const dirIndex = path.lastIndexOf('/');
     let dir = dirIndex !== -1 ? path.substring(0, dirIndex) : '';
     const files = fileCache[dir];
     return isFileContained(path, files);
+}
+
+function containsWildcard(path) {
+    return path.includes("*") || (path.includes("{") && path.includes("}"));
+}
+
+// Heavily inspired by https://github.com/League-of-Foundry-Developers/scene-packer/blob/main/scripts/assets/file.js
+async function wildcardExpandsToAtLeastOne(path) {
+    const base = await FilePicker.browse("data", path, { wildcard: true });
+    if (!base.files.length) {
+        return false;
+    }
+    return base.files.length > 0;
 }
 
 // Checking the full path is not possible due to CORS issues,

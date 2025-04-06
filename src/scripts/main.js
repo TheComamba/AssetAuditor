@@ -1,6 +1,8 @@
 import { AssetFilepaths } from "../apps/asset-filepaths.js";
 import { getAllAssets } from "./asset-aggregation.js";
 
+// CONFIG.debug.hooks = true;
+
 function isUserPermitted() {
     return game.user.role >= CONST.USER_ROLES.ASSISTANT;
 }
