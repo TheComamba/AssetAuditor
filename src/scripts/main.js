@@ -32,23 +32,22 @@ Hooks.once('ready', async function () {
     }
 });
 
-Hooks.on("renderSidebarTab", async (app, html) => {
+Hooks.on("renderSidebar", async (app, html) => {
     if (!isUserPermitted()) {
         return;
     }
-    if (app instanceof Settings) {
-        let button_text = game.i18n.localize("asset-auditor.asset-filepaths");
-        let button = $(`<button class='asset-list'><i class='fas fa-file-edit'></i> ${button_text}</button>`)
+    
+    let button_text = game.i18n.localize("asset-auditor.asset-filepaths");
+    let $button = $(`<button class='asset-list'><i class='fas fa-file-edit'></i> ${button_text}</button>`)
 
-        button.click(function () {
-            new AssetFilepaths().render(true);
-        });
+    $button.click(function () {
+        new AssetFilepaths().render(true);
+    });
 
-        let settings_sidebar = html.find("div#settings-game");
-        if (settings_sidebar.length == 0) {
-            ui.notifications.error(game.i18n.localize("asset-auditor.sidebar-not-found"));
-            return;
-        }
-        settings_sidebar.append(button);
+    let settings_sidebar = document.querySelector('#settings .settings');
+    if (settings_sidebar.length == 0) {
+        ui.notifications.error(game.i18n.localize("asset-auditor.sidebar-not-found"));
+        return;
     }
-})
+    settings_sidebar.appendChild($button[0]);
+});
