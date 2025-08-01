@@ -8,7 +8,7 @@
       "email": "thecomamba@jojoheinze.de"
     }
   ],
-  "version": "2.0.0",
+  "version": "2.0.1",
   "compatibility": {
     "minimum": "13",
 		"verified": "13"
@@ -29,8 +29,8 @@
     }
   ],
   "url": "https://github.com/TheComamba/AssetAuditor",
-  "manifest": "https://raw.githubusercontent.com/TheComamba/AssetAuditor/v2.0.0/src/module.json",
-  "download": "https://github.com/TheComamba/AssetAuditor/archive/refs/tags/v2.0.0.zip",
+  "manifest": "https://raw.githubusercontent.com/TheComamba/AssetAuditor/v2.0.1/src/module.json",
+  "download": "https://github.com/TheComamba/AssetAuditor/archive/refs/tags/v2.0.1.zip",
   "bugs": "https://github.com/TheComamba/AssetAuditor/issues",
-  "readme": "https://github.com/TheComamba/AssetAuditor/blob/v2.0.0/README.md"
+  "readme": "https://github.com/TheComamba/AssetAuditor/blob/v2.0.1/README.md"
 }
