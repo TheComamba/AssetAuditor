@@ -1,0 +1,20 @@
+{
+  "name": "asset-auditor",
+  "version": "2.0.2",
+  "description": "List, check, modify and fix filepaths of assets in Foundry VTT.",
+  "author": "The Comamba <thecomamba@jojoheinze.de>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/TheComamba/AssetAuditor.git"
+  },
+  "bugs": {
+    "url": "https://github.com/TheComamba/AssetAuditor/issues"
+  },
+  "homepage": "https://github.com/TheComamba/AssetAuditor#readme",
+  "keywords": [
+    "foundry-vtt",
+    "foundryvtt",
+    "module"
+  ]
+}
