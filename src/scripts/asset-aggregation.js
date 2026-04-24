@@ -163,7 +163,8 @@ function collectAssetDirectories(pointerGroups) {
             if (path === null) {
                 return;
             }
-            const dir = path.substring(0, path.lastIndexOf('/'));
+            const pathWithoutQuery = stripQueryString(path);
+            const dir = pathWithoutQuery.substring(0, pathWithoutQuery.lastIndexOf('/'));
             assetDirs.add(dir);
         });
     });
@@ -219,6 +220,11 @@ function isUrl(path) {
     return path.startsWith("http://") || path.startsWith("https://");
 }
 
+function stripQueryString(path) {
+    const queryIndex = path.indexOf('?');
+    return queryIndex !== -1 ? path.substring(0, queryIndex) : path;
+}
+
 async function isValidPath(path, fileCache) {
     if (isUrl(path)) {
         return await isValidHttpDomain(path);
@@ -228,18 +234,20 @@ async function isValidPath(path, fileCache) {
 }
 
 async function isValidLocalPath(path, fileCache) {
+    let pathWithoutQuery = stripQueryString(path);
+    
     if (isWindowsPlatform) {
-        path = path.toLowerCase();
+        pathWithoutQuery = pathWithoutQuery.toLowerCase();
     }
 
-    if (containsWildcard(path)) {
-        return await wildcardExpandsToAtLeastOne(path);
+    if (containsWildcard(pathWithoutQuery)) {
+        return await wildcardExpandsToAtLeastOne(pathWithoutQuery);
     }
 
-    const dirIndex = path.lastIndexOf('/');
-    let dir = dirIndex !== -1 ? path.substring(0, dirIndex) : '';
+    const dirIndex = pathWithoutQuery.lastIndexOf('/');
+    let dir = dirIndex !== -1 ? pathWithoutQuery.substring(0, dirIndex) : '';
     const files = fileCache[dir];
-    return isFileContained(path, files);
+    return isFileContained(pathWithoutQuery, files);
 }
 
 function containsWildcard(path) {
@@ -284,7 +292,8 @@ async function dirExists(dir) {
 }
 
 async function getLastValidPath(inputPath) {
-    const pathComponents = inputPath.split('/');
+    const pathWithoutQuery = stripQueryString(inputPath);
+    const pathComponents = pathWithoutQuery.split('/');
     let lastValidPath = '';
     let currentPath = '';
 
