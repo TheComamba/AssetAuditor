@@ -1,6 +1,6 @@
 {
   "name": "asset-auditor",
-  "version": "2.0.2",
+  "version": "2.0.3",
   "description": "List, check, modify and fix filepaths of assets in Foundry VTT.",
   "author": "The Comamba <thecomamba@jojoheinze.de>",
   "license": "MIT",
