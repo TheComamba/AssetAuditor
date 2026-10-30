@@ -1,4 +1,5 @@
-import { getAllAssets, getAllAssetTypes, getAssetPath, getLastValidPath, setAssetPath } from "../scripts/asset-aggregation.js";
+import { updateWildcardFeedback } from "./asset-wildcards.js";
+import { getAllAssets, getAllAssetTypes, getAssetPath, getLastValidPath, setAssetPath, isWildcardPath } from "../scripts/asset-aggregation.js";
 
 class AssetFilepaths extends Application {
     constructor() {
@@ -30,6 +31,11 @@ class AssetFilepaths extends Application {
 
     activateListeners(html) {
         super.activateListeners(html);
+        html.off('asset-auditor:path-saved.wildcards').on('asset-auditor:path-saved.wildcards', (_event, entry, row) => {
+            void updateWildcardFeedback(entry, row).catch(error =>
+                console.error("Asset Auditor | Could not refresh wildcard feedback", error));
+        });
+
 
         html.find('#toggle-invalid').change(async (event) => {
             this.showInvalidOnly = event.target.checked;
@@ -93,6 +99,9 @@ class AssetFilepaths extends Application {
             if (!asset) {
                 ui.notifications.error(game.i18n.format("asset-auditor.app.asset-not-found", { id: assetId }));
                 return;
+            }
+            if (isWildcardPath(input.val())) {
+                ui.notifications.warn(game.i18n.localize("asset-auditor.app.wildcard-picker-warning"));
             }
             const lastValidPath = asset.lastValidPath;
             const filePicker = new FilePicker({

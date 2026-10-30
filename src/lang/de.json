@@ -10,6 +10,8 @@
     "asset-auditor.app.delete-replace-button": "Lösche Eingaben im Ersetzungsfeld",
     "asset-auditor.app.replace-button": "Ersetze alle",
     "asset-auditor.app.reset-button": "Setze Pfadänderungen zurück",
+    "asset-auditor.app.wildcard-count": "Wildcard · {count} Treffer",
+    "asset-auditor.app.wildcard-picker-warning": "Dieser Pfad ist ein Wildcard-Muster. Die Auswahl einer Einzeldatei ersetzt das Muster und wird sofort gespeichert. Um das Muster zu erhalten, Ordner oder Muster direkt im Pfadfeld bearbeiten und mit der Diskette speichern.",
     "asset-auditor.app.browse-button": "Durchsuche das Dateisystem",
     "asset-auditor.app.update-button": "Schreibe Pfad in Asset",
     "asset-auditor.invalid-assets-found": "Asset Auditor hat {count} invalide Dateipfade gefunden.",
