@@ -15,5 +15,16 @@
     "asset-auditor.invalid-assets-found": "Asset Auditor found {count} invalid filepaths.",
     "asset-auditor.settings.run-on-startup": "Run asset audit on startup",
     "asset-auditor.settings.run-on-startup-hint": "This will run the asset audit on startup and display an error message if any invalid filepaths are found.",
+    "asset-auditor.app.recheck": "Recheck",
+    "asset-auditor.app.recheck-hint": "Reload and check asset paths. Unsaved path edits in this list will be discarded.",
+    "asset-auditor.app.scan-idle": "Preparing scan …",
+    "asset-auditor.app.scan-starting": "Collecting asset references …",
+    "asset-auditor.app.scan-directories": "Reading directories: {completed} / {total}",
+    "asset-auditor.app.scan-documents": "Checking asset references: {completed} / {total}",
+    "asset-auditor.app.scan-hints": "Locating valid parent directories: {completed} / {total}",
+    "asset-auditor.app.scan-complete": "Scan complete · {count} entries in results · {invalid} invalid",
+    "asset-auditor.app.scan-error": "Scan failed. Previous results have been retained. Please recheck.",
+    "asset-auditor.app.scan-progress": "Progress of the current scan stage",
+    "asset-auditor.app.scan-empty": "No entries match the selected filters.",
     "asset-auditor.sidebar-not-found": "The game settings sidebar section could not be found in HTML. The assets button cannot be rendered."
 }

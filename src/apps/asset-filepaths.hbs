@@ -2,6 +2,13 @@
     <section>
         <header>
             <h1>{{title}}</h1>
+            <div class="asset-auditor-scan">
+                <div class="asset-scan-status" role="status" aria-live="polite" aria-atomic="true">
+                    <div class="asset-scan-label"><i class="fas fa-spinner" aria-hidden="true"></i><span class="asset-scan-message">{{scanMessage}}</span></div>
+                    <progress max="1" aria-label="{{localize 'asset-auditor.app.scan-progress'}}" hidden></progress>
+                </div>
+                <button type="button" class="recheck-assets-button" title="{{localize 'asset-auditor.app.recheck-hint'}}"><i class="fas fa-rotate" aria-hidden="true"></i> {{localize "asset-auditor.app.recheck"}}</button>
+            </div>
             <div style="display: flex; align-items: center;">
                 <input type="text" class="search-input" value="{{currentSearchInput}}" />
                 <button type="button" class="delete-search-button" title="{{localize "
@@ -43,6 +50,7 @@
     </section>
 
     <section>
+        <p class="asset-auditor-scan-empty" {{#unless scanEmpty}}hidden{{/unless}}>{{localize "asset-auditor.app.scan-empty"}}</p>
         <div>
             {{#each assets as |group|}}
             <h2>{{group.type}}</h2>

@@ -15,5 +15,16 @@
     "asset-auditor.invalid-assets-found": "Asset Auditor hat {count} invalide Dateipfade gefunden.",
     "asset-auditor.settings.run-on-startup": "Asset Audit beim Start durchführen",
     "asset-auditor.settings.run-on-startup-hint": "Dies führt das Asset Audit beim Start durch und zeigt eine Fehlermeldung, falls ungültige Dateipfade gefunden werden.",
+    "asset-auditor.app.recheck": "Neu prüfen",
+    "asset-auditor.app.recheck-hint": "Dateipfade neu einlesen und prüfen. Nicht gespeicherte Pfadeingaben in dieser Liste werden verworfen.",
+    "asset-auditor.app.scan-idle": "Prüfung wird vorbereitet …",
+    "asset-auditor.app.scan-starting": "Dateiverweise werden erfasst …",
+    "asset-auditor.app.scan-directories": "Verzeichnisse einlesen: {completed} / {total}",
+    "asset-auditor.app.scan-documents": "Dateiverweise prüfen: {completed} / {total}",
+    "asset-auditor.app.scan-hints": "Fehlerhinweise ermitteln: {completed} / {total}",
+    "asset-auditor.app.scan-complete": "Prüfung abgeschlossen · {count} Einträge im Ergebnis · {invalid} ungültig",
+    "asset-auditor.app.scan-error": "Prüfung fehlgeschlagen. Die bisherigen Ergebnisse bleiben erhalten. Bitte erneut prüfen.",
+    "asset-auditor.app.scan-progress": "Fortschritt des aktuellen Prüfschritts",
+    "asset-auditor.app.scan-empty": "Keine Einträge für die gewählten Filter gefunden.",
     "asset-auditor.sidebar-not-found": "Der Spieleinstellungen Abschnitt konnte nicht im HTML gefunden werden. Der Assets Button kann nicht angezeigt werden."
 }

@@ -32,5 +32,6 @@
   "manifest": "https://raw.githubusercontent.com/TheComamba/AssetAuditor/v2.0.3/src/module.json",
   "download": "https://github.com/TheComamba/AssetAuditor/archive/refs/tags/v2.0.3.zip",
   "bugs": "https://github.com/TheComamba/AssetAuditor/issues",
-  "readme": "https://github.com/TheComamba/AssetAuditor/blob/v2.0.3/README.md"
+  "readme": "https://github.com/TheComamba/AssetAuditor/blob/v2.0.3/README.md",
+  "styles": ["styles/asset-scan.css"]
 }

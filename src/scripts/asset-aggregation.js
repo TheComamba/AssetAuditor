@@ -171,13 +171,13 @@ function collectAssetDirectories(pointerGroups) {
     return Array.from(assetDirs);
 }
 
-async function initializeFileCache(assetDirs) {
+async function initializeFileCache(assetDirs, onProgress) {
     isWindowsPlatform = await isWindows();
     const fileCache = {};
-    for (let dir of assetDirs) {
-        if (isUrl(dir)) {
-            continue;
-        }
+    const directories = assetDirs.filter(dir => !isUrl(dir));
+    let completed = 0;
+    onProgress?.({phase: "directories", completed, total: directories.length});
+    for (let dir of directories) {
         if (!fileCache.hasOwnProperty(dir)) {
             try {
                 const fileResult = await FilePicker.browse("data", dir);
@@ -193,6 +193,7 @@ async function initializeFileCache(assetDirs) {
                 fileCache[dir] = [];
             }
         }
+        onProgress?.({phase: "directories", completed: ++completed, total: directories.length});
     }
     return fileCache;
 }
@@ -309,25 +310,32 @@ async function getLastValidPath(inputPath) {
     return lastValidPath;
 }
 
-async function addLastValidPathsToInvalidAssets(assets) {
+async function addLastValidPathsToInvalidAssets(assets, onProgress) {
+    const total = assets.reduce((count, group) => count + group.assets.filter(asset => !asset.isValid).length, 0);
+    let completed = 0;
+    onProgress?.({phase: "hints", completed, total});
     for (const assetTypes of assets) {
         for (const asset of assetTypes.assets) {
             if (!asset.isValid) {
                 asset.lastValidPath = await getLastValidPath(asset.path);
+                onProgress?.({phase: "hints", completed: ++completed, total});
             }
         }
     }
 }
 
-async function getAllAssets(invalidOnly, searchText, singularType) {
-    console.time('getAllAssets');
-
+async function getAllAssets(invalidOnly, searchText, singularType, onProgress) {
     const pointerGroups = getAllAssetPointers(singularType);
     const assetDirs = collectAssetDirectories(pointerGroups);
-    const fileCache = await initializeFileCache(assetDirs);
+    const fileCache = await initializeFileCache(assetDirs, onProgress);
+    const total = pointerGroups.reduce((count, group) => count + group.collection.length, 0);
+    let completed = 0;
+    onProgress?.({phase: "documents", completed, total});
     let assetPromises = pointerGroups.map(async group => {
         let mappedAssetPromises = group.collection.map(async asset => {
-            return await assetPointerToObject(asset, fileCache);
+            const result = await assetPointerToObject(asset, fileCache);
+            onProgress?.({phase: "documents", completed: ++completed, total});
+            return result;
         });
 
         let mappedAssets = await Promise.all(mappedAssetPromises);
@@ -353,11 +361,9 @@ async function getAllAssets(invalidOnly, searchText, singularType) {
 
     let assets = await Promise.all(assetPromises);
 
-    await addLastValidPathsToInvalidAssets(assets);
+    await addLastValidPathsToInvalidAssets(assets, onProgress);
 
     assets.sort((a, b) => a.type.localeCompare(b.type));
-
-    console.timeEnd('getAllAssets');
 
     return assets;
 }
