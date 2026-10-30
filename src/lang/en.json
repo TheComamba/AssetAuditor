@@ -1,6 +1,13 @@
 {
     "asset-auditor.asset-aggregation.type-error": "Asset type \"{type}\" is not supported.",
     "asset-auditor.asset-filepaths": "Asset Filepaths",
+    "asset-auditor.app.overview-hint": "Check asset paths and edit their individual usages.",
+    "asset-auditor.app.search-replace": "Search and replace",
+    "asset-auditor.app.search-label": "Search",
+    "asset-auditor.app.search-placeholder": "Name, scene or file path",
+    "asset-auditor.app.replace-label": "Replace with",
+    "asset-auditor.app.all-types": "All types",
+    "asset-auditor.app.path-label": "File path",
     "asset-auditor.app.asset-not-found": "Asset with ID {id} was not found.",
     "asset-auditor.app.filter-assets": "Show only assets of type",
     "asset-auditor.app.invalid-only": "Show only invalid filepaths",

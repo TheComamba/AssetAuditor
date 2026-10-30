@@ -1,8 +1,22 @@
 import { getAllAssets, getAllAssetTypes, getAssetPath, getLastValidPath, setAssetPath } from "../scripts/asset-aggregation.js";
 
-class AssetFilepaths extends Application {
-    constructor() {
-        super();
+const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
+
+class AssetFilepaths extends HandlebarsApplicationMixin(ApplicationV2) {
+    static DEFAULT_OPTIONS = {
+        id: "asset-auditor-filepaths",
+        classes: ["asset-auditor"],
+        tag: "div",
+        window: {title: "asset-auditor.asset-filepaths", icon: "fas fa-file-circle-check", resizable: true},
+        position: {width: 1100, height: 760}
+    };
+
+    static PARTS = {
+        main: {template: "modules/asset-auditor/apps/asset-filepaths.hbs", scrollable: [".asset-results"]}
+    };
+
+    constructor(options = {}) {
+        super(options);
         this.context = {};
         this.showInvalidOnly = false;
         this.currentSearchInput = '';
@@ -11,12 +25,8 @@ class AssetFilepaths extends Application {
         this.singularType = '';
     }
 
-    get template() {
-        return `modules/asset-auditor/apps/asset-filepaths.hbs`;
-    }
-
-    async getData(options = {}) {
-        this.context = await super.getData(options);
+    async _prepareContext(options = {}) {
+        this.context = await super._prepareContext(options);
         this.context.title = game.i18n.localize("asset-auditor.asset-filepaths");
         this.context.showInvalidOnly = this.showInvalidOnly
         this.context.currentSearchInput = this.currentSearchInput;
@@ -28,8 +38,12 @@ class AssetFilepaths extends Application {
         return this.context;
     }
 
+    _onRender(context, options) {
+        super._onRender(context, options);
+        this.activateListeners($(this.element));
+    }
+
     activateListeners(html) {
-        super.activateListeners(html);
 
         html.find('#toggle-invalid').change(async (event) => {
             this.showInvalidOnly = event.target.checked;
@@ -65,9 +79,9 @@ class AssetFilepaths extends Application {
             const assetId = updateButton.data('asset-id');
             await this.updateAssetPath(assetId, inputValue);
             input.data('original-value', inputValue);
-            resetButton.css('opacity', 0);
+            resetButton.css('opacity', '');
             resetButton.prop('disabled', true);
-            updateButton.css('opacity', 0);
+            updateButton.css('opacity', '');
             updateButton.prop('disabled', true);
             this.refresh(html);
         });
@@ -78,9 +92,9 @@ class AssetFilepaths extends Application {
             const input = resetButton.siblings('.path-input');
             const originalValue = input.data('original-value');
             input.val(originalValue);
-            resetButton.css('opacity', 0);
+            resetButton.css('opacity', '');
             resetButton.prop('disabled', true);
-            updateButton.css('opacity', 0);
+            updateButton.css('opacity', '');
             updateButton.prop('disabled', true);
             this.refresh(html);
         });
@@ -104,9 +118,9 @@ class AssetFilepaths extends Application {
                     input.data('original-value', path);
                     const resetButton = browseButton.siblings('.reset-button');
                     const updateBurron = browseButton.siblings('.update-button');
-                    resetButton.css('opacity', 0);
+                    resetButton.css('opacity', '');
                     resetButton.prop('disabled', true);
-                    updateBurron.css('opacity', 0);
+                    updateBurron.css('opacity', '');
                     updateBurron.prop('disabled', true);
                 },
                 top: this.position.top + 40,
@@ -123,14 +137,14 @@ class AssetFilepaths extends Application {
             const resetButton = input.siblings('.reset-button');
             const updateButton = input.siblings('.update-button');
             if (currentValue !== originalValue) {
-                resetButton.css('opacity', 1);
+                resetButton.css('opacity', '');
                 resetButton.prop('disabled', false);
-                updateButton.css('opacity', 1);
+                updateButton.css('opacity', '');
                 updateButton.prop('disabled', false);
             } else {
-                resetButton.css('opacity', 0);
+                resetButton.css('opacity', '');
                 resetButton.prop('disabled', true);
-                updateButton.css('opacity', 0);
+                updateButton.css('opacity', '');
                 updateButton.prop('disabled', true);
             }
         });
@@ -143,6 +157,7 @@ class AssetFilepaths extends Application {
             })
             .on('keydown', (event) => {
                 if (event.key === 'Enter') {
+                    event.preventDefault();
                     this.performSearch(html);
                 } else if (event.key === 'Escape') {
                     this.performDeleteSearch(event, html);
@@ -157,6 +172,7 @@ class AssetFilepaths extends Application {
             })
             .on('keydown', async (event) => {
                 if (event.key === 'Enter') {
+                    event.preventDefault();
                     await this.performReplacement(html);
                 } else if (event.key === 'Escape') {
                     this.performDeleteReplace(event, html);
@@ -202,8 +218,7 @@ class AssetFilepaths extends Application {
     }
 
     refresh(html) {
-        this.render();
-        this.updateOperability(html);
+        return this.render({force: true});
     }
 
     updateOperability(html) {
@@ -212,22 +227,22 @@ class AssetFilepaths extends Application {
         const replaceButton = html.find('.replace-button');
         if (this.currentSearchInput.trim() !== '') {
             deleteSearchButton.prop('disabled', false);
-            deleteSearchButton.css('opacity', 1);
+            deleteSearchButton.css('opacity', '');
             searchButton.prop('disabled', false);
             replaceButton.prop('disabled', false);
         } else {
             deleteSearchButton.prop('disabled', true);
-            deleteSearchButton.css('opacity', 0);
+            deleteSearchButton.css('opacity', '');
             searchButton.prop('disabled', true);
             replaceButton.prop('disabled', true);
         }
         const deleteReplaceButton = html.find('.delete-replace-button');
         if (this.replaceText.trim() !== '') {
             deleteReplaceButton.prop('disabled', false);
-            deleteReplaceButton.css('opacity', 1);
+            deleteReplaceButton.css('opacity', '');
         } else {
             deleteReplaceButton.prop('disabled', true);
-            deleteReplaceButton.css('opacity', 0);
+            deleteReplaceButton.css('opacity', '');
         }
     }
 
