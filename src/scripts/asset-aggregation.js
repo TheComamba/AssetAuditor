@@ -1,19 +1,5 @@
 const constructedIdMarker = "_ID_GENERATED_BY_ASSET_AUDITOR";
 const domainCache = {};
-let isWindowsPlatform;
-
-async function isWindows() {
-    if (navigator.userAgentData) {
-        const hints = ["platform"];
-        let data = await navigator.userAgentData.getHighEntropyValues(hints);
-        return data.platform === "Win32" || data.platform === "Windows";
-    } else {
-        console.log("User agent data not available.");
-        return false;
-    }
-}
-
-
 function isIdConstructed(id) {
     return id.includes(constructedIdMarker);
 }
@@ -172,7 +158,6 @@ function collectAssetDirectories(pointerGroups) {
 }
 
 async function initializeFileCache(assetDirs) {
-    isWindowsPlatform = await isWindows();
     const fileCache = {};
     for (let dir of assetDirs) {
         if (isUrl(dir)) {
@@ -181,15 +166,8 @@ async function initializeFileCache(assetDirs) {
         if (!fileCache.hasOwnProperty(dir)) {
             try {
                 const fileResult = await FilePicker.browse("data", dir);
-                if (isWindowsPlatform) {
-                    dir = dir.toLowerCase();
-                    fileResult.files = fileResult.files.map(file => file.toLowerCase());
-                }
                 fileCache[dir] = fileResult.files;
             } catch (error) {
-                if (isWindowsPlatform) {
-                    dir = dir.toLowerCase();
-                }
                 fileCache[dir] = [];
             }
         }
@@ -197,23 +175,15 @@ async function initializeFileCache(assetDirs) {
     return fileCache;
 }
 
-function isFileContained(file, files) {
-    while (file.startsWith('/')) {
-        file = file.substring(1);
-    }
-    if (isWindowsPlatform) {
-        file = file.toLowerCase();
-    }
-    if (files.includes(file)) {
-        return true;
-    }
-    const encodedFile = encodeURI(file);
-    for (const f of files) {
-        if (f === encodedFile) {
-            return true;
-        }
-    }
-    return false;
+function normalizeLocalPath(path) {
+    const localPath = stripQueryString(path).replace(/^\/+/, "");
+    try { return decodeURI(localPath); }
+    catch { return localPath; }
+}
+
+function isFileContained(file, files = []) {
+    const normalized = normalizeLocalPath(file);
+    return files.some(candidate => normalizeLocalPath(candidate) === normalized);
 }
 
 function isUrl(path) {
@@ -234,11 +204,7 @@ async function isValidPath(path, fileCache) {
 }
 
 async function isValidLocalPath(path, fileCache) {
-    let pathWithoutQuery = stripQueryString(path);
-    
-    if (isWindowsPlatform) {
-        pathWithoutQuery = pathWithoutQuery.toLowerCase();
-    }
+    const pathWithoutQuery = stripQueryString(path);
 
     if (containsWildcard(pathWithoutQuery)) {
         return await wildcardExpandsToAtLeastOne(pathWithoutQuery);
