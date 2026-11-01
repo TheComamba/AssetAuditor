@@ -247,7 +247,7 @@ class AssetFilepaths extends Application {
             ui.notifications.error(game.i18n.format("asset-auditor.app.asset-not-found", { id: assetId }));
             return;
         }
-        await setAssetPath(asset.asset, inputValue);
+        asset.asset = await setAssetPath(asset.asset, inputValue);
     };
 }
 
