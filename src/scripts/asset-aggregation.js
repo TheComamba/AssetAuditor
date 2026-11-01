@@ -171,6 +171,14 @@ function collectAssetDirectories(pointerGroups) {
     return Array.from(assetDirs);
 }
 
+// Asset URLs can resolve to either User Data or Foundry's built-in Core Data.
+async function browseAssetSources(target, options = {}) {
+    const results = await Promise.allSettled(
+        ["data", "public"].map(source => FilePicker.browse(source, target, options))
+    );
+    return results.filter(result => result.status === "fulfilled").map(result => result.value);
+}
+
 async function initializeFileCache(assetDirs) {
     isWindowsPlatform = await isWindows();
     const fileCache = {};
@@ -180,7 +188,8 @@ async function initializeFileCache(assetDirs) {
         }
         if (!fileCache.hasOwnProperty(dir)) {
             try {
-                const fileResult = await FilePicker.browse("data", dir);
+                const listings = await browseAssetSources(dir);
+                const fileResult = {files: listings.flatMap(listing => listing.files)};
                 if (isWindowsPlatform) {
                     dir = dir.toLowerCase();
                     fileResult.files = fileResult.files.map(file => file.toLowerCase());
@@ -256,7 +265,8 @@ function containsWildcard(path) {
 
 // Heavily inspired by https://github.com/League-of-Foundry-Developers/scene-packer/blob/main/scripts/assets/file.js
 async function wildcardExpandsToAtLeastOne(path) {
-    const base = await FilePicker.browse("data", path, { wildcard: true });
+    const listings = await browseAssetSources(path, { wildcard: true });
+    const base = {files: listings.flatMap(listing => listing.files)};
     if (!base.files.length) {
         return false;
     }
@@ -283,12 +293,7 @@ async function isValidHttpDomain(path) {
 }
 
 async function dirExists(dir) {
-    try {
-        const result = await FilePicker.browse("data", dir);
-        return true;
-    } catch (error) {
-        return false;
-    }
+    return (await browseAssetSources(dir)).length > 0;
 }
 
 async function getLastValidPath(inputPath) {
@@ -378,7 +383,7 @@ async function assetPointerToObject(asset, fileCache) {
         return null;
     }
     const path = getAssetPath(asset);
-    if (!path || path.startsWith("icons/")) {
+    if (!path) {
         return null;
     }
     const type = asset.constructor.name;
