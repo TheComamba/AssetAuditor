@@ -47,8 +47,8 @@
             {{#each assets as |group|}}
             <h2>{{group.type}}</h2>
             {{#each group.assets as |asset|}}
-            <div style="display: flex; align-items: start; {{#unless asset.isValid}}color: red;{{/unless}}">
-                <i class="fa fa-{{asset.icon}}" style="width: 25px;"></i>
+            <div class="asset-row" style="display: flex; align-items: start; {{#unless asset.isValid}}color: red;{{/unless}}">
+                <i class="asset-status {{asset.icon}}" style="width: 25px;"></i>
                 <span style="width: 150px; overflow-wrap: anywhere; padding-right: 4px;">{{asset.name}}</span>
                 <input type="text" value="{{asset.path}}" data-original-value="{{asset.path}}" class="path-input"
                     style="width: 750px;" />
@@ -68,7 +68,7 @@
                 </button>
             </div>
             {{#unless asset.isValid}}
-            <div style="margin-bottom: 10px;">
+            <div class="asset-invalid-hint" style="margin-bottom: 10px;">
                 <span style="width: 165px; text-align: right; display: inline-block; margin-right: 10px;">{{localize
                     "asset-auditor.app.last-valid-path"}}</span>
                 <span style="width: 750px; text-align: left; display: inline-block;">{{asset.lastValidPath}}</span>

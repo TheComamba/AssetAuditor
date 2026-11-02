@@ -402,4 +402,12 @@ async function assetPointerToObject(asset, fileCache) {
     };
 }
 
-export { getAllAssets, getAllAssetTypes, getAssetPath, getLastValidPath, setAssetPath };
+// Revalidate saved paths against a fresh listing rather than the scan's cache.
+async function checkAssetPath(path) {
+    if (!path) return false;
+    const cleanPath = stripQueryString(path);
+    const directory = cleanPath.substring(0, cleanPath.lastIndexOf('/'));
+    return await isValidPath(path, await initializeFileCache([directory]));
+}
+
+export { getAllAssets, getAllAssetTypes, getAssetPath, getLastValidPath, setAssetPath, checkAssetPath, getIcon };
