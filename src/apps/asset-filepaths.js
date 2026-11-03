@@ -31,6 +31,22 @@ class AssetFilepaths extends Application {
     activateListeners(html) {
         super.activateListeners(html);
 
+        html.find('.open-original-button').click(async (event) => {
+            const button = event.currentTarget;
+            const group = this.context.assets.find(group => group.type === button.dataset.assetType);
+            const entry = group?.assets.find(asset => asset.id === button.dataset.assetId);
+            button.disabled = true;
+            try {
+                const { openAssetOriginal } = await import("./asset-original.js");
+                await openAssetOriginal(entry?.asset);
+            } catch (error) {
+                console.error("Asset Auditor | Could not open original", error);
+                ui.notifications.error(game.i18n.localize("asset-auditor.app.open-original-error"));
+            } finally {
+                button.disabled = false;
+            }
+        });
+
         html.find('#toggle-invalid').change(async (event) => {
             this.showInvalidOnly = event.target.checked;
             this.refresh(html);
