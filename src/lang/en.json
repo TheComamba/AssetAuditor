@@ -16,6 +16,8 @@
     "asset-auditor.app.replace-button": "Replace all",
     "asset-auditor.app.reset-button": "Reset path modifications",
     "asset-auditor.app.browse-button": "Browse for file",
+    "asset-auditor.app.token-usages": "{count} affected tokens",
+    "asset-auditor.app.asset-usages": "{count} usages",
     "asset-auditor.app.update-button": "Save asset path",
     "asset-auditor.invalid-assets-found": "Asset Auditor found {count} invalid filepaths.",
     "asset-auditor.settings.run-on-startup": "Run asset audit on startup",
