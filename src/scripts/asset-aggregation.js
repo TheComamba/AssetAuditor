@@ -177,8 +177,12 @@ async function initializeFileCache(assetDirs) {
 
 function normalizeLocalPath(path) {
     const localPath = stripQueryString(path).replace(/^\/+/, "");
-    try { return decodeURI(localPath); }
-    catch { return localPath; }
+    // Decode each filename component once. Keep component boundaries so an
+    // encoded slash cannot be mistaken for a real directory separator.
+    return JSON.stringify(localPath.split('/').map(component => {
+        try { return decodeURIComponent(component); }
+        catch { return component; }
+    }));
 }
 
 function isFileContained(file, files = []) {

@@ -83,3 +83,17 @@ test('percent escapes are decoded once, preserving distinct encoded filenames', 
     assert.equal(results.find(entry => entry.name === 'space').isValid, true);
     assert.equal(results.find(entry => entry.name === 'percent').isValid, false);
 });
+
+for (const character of ['&', '+', '#', ';', '=', '@', '$', ',', ':', '[', ']', 'ä', '字', '%']) {
+    for (const encodedListing of [true, false]) {
+        test(`filename character ${character} matches ${encodedListing ? 'encoded' : 'literal'} server listing`, async () => {
+            const literal = `images/Horse ${character} Cart.webp`;
+            const encoded = literal.split('/').map(encodeURIComponent).join('/');
+            listings.set('images', [encodedListing ? encoded : literal]);
+            const path = encodedListing ? literal : encoded;
+            const subject = add('special', path);
+            assert.equal((await scan())[0].isValid, true);
+            assert.equal(subject.img, path, 'comparison must preserve the stored path');
+        });
+    }
+}
