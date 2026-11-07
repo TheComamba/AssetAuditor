@@ -8,7 +8,6 @@ async function openAudit({invalidOnly = true} = {}) {
     app.showInvalidOnly = invalidOnly;
     app.singularType = "Actor";
     await app.render();
-    await app._scanPromise;
 
     return app;
 }
