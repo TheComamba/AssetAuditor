@@ -17,7 +17,13 @@ class Config {
     constructor(options) { this.options = options; }
     async render(options) { opened.push({config: this.constructor.name, options: this.options, render: options}); }
 }
-class PrototypeTokenConfig extends Config {}
+class PrototypeTokenConfig extends Config {
+    constructor(options) {
+        super(options);
+        // Foundry resolves the owning actor through the supplied prototype.
+        if (!options.prototype?.parent) throw new TypeError("Prototype token requires its parent actor");
+    }
+}
 class PlaylistSoundConfig extends Config {}
 class ApplicationV2Stub { async _prepareContext() { return {}; } _onRender() {} }
 globalThis.foundry = {data: {PrototypeToken}, applications: {
@@ -58,9 +64,9 @@ test("document sheets open even when their asset file is missing", async () => {
     }
 });
 test("prototype navigation uses its owning actor's configuration", async () => {
-    const actor = new Actor('owner');actor.prototypeToken = new PrototypeToken();game.actors.push(actor);
+    const actor = new Actor('owner');actor.prototypeToken = new PrototypeToken();actor.prototypeToken.parent = actor;game.actors.push(actor);
     await openAssetOriginal(actor.prototypeToken);
-    assert.deepEqual(opened[0], {config: 'PrototypeTokenConfig', options: {actor}, render: {force: true}});
+    assert.deepEqual(opened[0], {config: 'PrototypeTokenConfig', options: {prototype: actor.prototypeToken}, render: {force: true}});
 });
 test("playlist sounds use their native configuration even without a sheet", async () => {
     const document = new PlaylistSound('dice');
@@ -103,8 +109,8 @@ test("navigation distinguishes the same ID in different document types", async (
     actor.sheet = sheet(actor);item.sheet = sheet(item);
     const app = new AssetFilepaths();
     app.context.assets = [
-        {type: 'Actor', assets: [{id: 'shared', asset: actor}]},
-        {type: 'Item', assets: [{id: 'shared', asset: item}]}
+        {type: 'Actor', assets: [{id: 'shared', type: 'Actor', asset: actor}]},
+        {type: 'Item', assets: [{id: 'shared', type: 'Item', asset: item}]}
     ];
     const button = {dataset: {assetId: 'shared', assetType: 'Item'}, disabled: false};
     await bind(app)({currentTarget: button});
@@ -117,4 +123,15 @@ test("navigation errors notify the user and restore the button", async t => {
     await bind(app)({currentTarget: button});
     assert.equal(notifications[0], 'asset-auditor.app.open-original-error');
     assert.equal(button.disabled, false);
+});
+
+test("navigation resolves system subclasses whose row type differs from the group", async () => {
+    class SystemActor extends Actor {}
+    const actor = new SystemActor('system-actor');actor.img = 'images/missing.webp';actor.sheet = sheet(actor);game.actors.push(actor);
+    const app = new AssetFilepaths();app.singularType = 'Actor';await app.getData();
+    assert.equal(app.context.assets[0].type, 'Actor');
+    const entry = app.context.assets[0].assets[0];assert.equal(entry.type, 'SystemActor');
+    const button = {dataset: {assetId: entry.id, assetType: entry.type}, disabled: false};
+    await bind(app)({currentTarget: button});
+    assert.equal(opened[0]?.document, actor);assert.equal(notifications.length, 0);
 });

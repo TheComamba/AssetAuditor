@@ -33,8 +33,8 @@ class AssetFilepaths extends Application {
 
         html.find('.open-original-button').click(async (event) => {
             const button = event.currentTarget;
-            const group = this.context.assets.find(group => group.type === button.dataset.assetType);
-            const entry = group?.assets.find(asset => asset.id === button.dataset.assetId);
+            const entry = this.context.assets.flatMap(group => group.assets)
+                .find(asset => asset.type === button.dataset.assetType && asset.id === button.dataset.assetId);
             button.disabled = true;
             try {
                 const { openAssetOriginal } = await import("./asset-original.js");

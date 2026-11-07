@@ -9,7 +9,7 @@ export async function openAssetOriginal(asset) {
         const actor = getPrototypeActor(asset);
         if (!actor) throw new Error("The prototype token's actor is no longer available.");
         const Config = foundry.applications.sheets.PrototypeTokenConfig;
-        return await new Config({actor}).render({force: true});
+        return await new Config({prototype: actor.prototypeToken}).render({force: true});
     }
 
     // Open the journal at the affected page rather than its default first page.
