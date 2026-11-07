@@ -405,4 +405,12 @@ async function assetPointerToObject(asset, fileCache) {
     };
 }
 
-export { getAllAssets, getAllAssetTypes, getAssetPath, getLastValidPath, setAssetPath };
+// Revalidate one edited usage without scanning unrelated documents or folders.
+async function refreshAssetEntry(asset) {
+    const directories = collectAssetDirectories([{collection: [asset]}]);
+    const entry = await assetPointerToObject(asset, await initializeFileCache(directories));
+    if (entry && !entry.isValid) entry.lastValidPath = await getLastValidPath(entry.path);
+    return entry;
+}
+
+export { getAllAssets, getAllAssetTypes, getAssetPath, getLastValidPath, setAssetPath, refreshAssetEntry };
