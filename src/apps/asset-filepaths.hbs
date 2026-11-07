@@ -2,6 +2,9 @@
     <section>
         <header>
             <h1>{{title}}</h1>
+            <button type="button" class="rebuild-index-button" title="{{localize 'asset-auditor.app.refresh-index-hint'}}">
+                <i class="fas fa-rotate" aria-hidden="true"></i> {{localize 'asset-auditor.app.refresh-index'}}
+            </button>
             <div style="display: flex; align-items: center;">
                 <input type="text" class="search-input" value="{{currentSearchInput}}" placeholder="{{localize 'asset-auditor.app.search-placeholder'}}" />
                 <button type="button" class="delete-search-button" title="{{localize "

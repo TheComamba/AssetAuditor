@@ -1,9 +1,11 @@
-import { getAllAssets, getAllAssetTypes, getAssetPath, getLastValidPath, setAssetPath } from "../scripts/asset-aggregation.js";
+import { auditIndex } from "../scripts/asset-index.js";
+import { getAllAssetTypes } from "../scripts/asset-aggregation.js";
 
 class AssetFilepaths extends Application {
     constructor() {
         super();
         this.context = {};
+        this._index = auditIndex;
         this.showInvalidOnly = false;
         this.currentSearchInput = '';
         this.searchText = '';
@@ -24,12 +26,25 @@ class AssetFilepaths extends Application {
         this.context.replaceText = this.replaceText;
         this.context.assetTypes = getAllAssetTypes();
         this.context.singularType = this.singularType;
-        this.context.assets = await getAllAssets(this.showInvalidOnly, this.searchText, this.singularType);
+        this.context.assets = await this._index.query(this.showInvalidOnly, this.searchText, this.singularType);
         return this.context;
     }
 
     activateListeners(html) {
         super.activateListeners(html);
+
+        html.find('.rebuild-index-button').click(async () => {
+            const controls = html.find('button, input, select');
+            controls.prop('disabled', true);
+            try {
+                await this._index.rebuild();
+            } catch (error) {
+                console.error("Asset Auditor | Could not refresh index", error);
+                ui.notifications.error(game.i18n.localize("asset-auditor.app.index-refresh-error"));
+            } finally {
+                this.refresh(html);
+            }
+        });
 
         html.find('#toggle-invalid').change(async (event) => {
             this.showInvalidOnly = event.target.checked;
@@ -185,12 +200,12 @@ class AssetFilepaths extends Application {
 
     async performReplacement(html) {
         this.searchText = this.currentSearchInput;
-        const assets = this.context.assets.flatMap(assetMap => assetMap.assets.map(asset => asset.asset));
-        for (const asset of assets) {
-            const currentPath = getAssetPath(asset);
+        const entries = this.context.assets.flatMap(group => group.assets);
+        for (const entry of entries) {
+            const currentPath = entry.path;
             if (currentPath.includes(this.searchText)) {
                 const newPath = currentPath.replace(this.searchText, this.replaceText);
-                await setAssetPath(asset, newPath);
+                await this._index.save(entry, newPath);
             }
         }
         this.refresh(html);
@@ -247,7 +262,7 @@ class AssetFilepaths extends Application {
             ui.notifications.error(game.i18n.format("asset-auditor.app.asset-not-found", { id: assetId }));
             return;
         }
-        asset.asset = await setAssetPath(asset.asset, inputValue);
+        await this._index.save(asset, inputValue);
     };
 }
 

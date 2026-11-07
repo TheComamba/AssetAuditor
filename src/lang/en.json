@@ -20,5 +20,8 @@
     "asset-auditor.invalid-assets-found": "Asset Auditor found {count} invalid filepaths.",
     "asset-auditor.settings.run-on-startup": "Run asset audit on startup",
     "asset-auditor.settings.run-on-startup-hint": "This will run the asset audit on startup and display an error message if any invalid filepaths are found.",
-    "asset-auditor.sidebar-not-found": "The game settings sidebar section could not be found in HTML. The assets button cannot be rendered."
+    "asset-auditor.sidebar-not-found": "The game settings sidebar section could not be found in HTML. The assets button cannot be rendered.",
+    "asset-auditor.app.refresh-index": "Refresh index",
+    "asset-auditor.app.refresh-index-hint": "Recheck all documents and file paths. Searches and filters use the cached index.",
+    "asset-auditor.app.index-refresh-error": "Could not refresh the asset index. The previous results are still available."
 }
