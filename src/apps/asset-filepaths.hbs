@@ -3,7 +3,7 @@
         <header>
             <h1>{{title}}</h1>
             <div style="display: flex; align-items: center;">
-                <input type="text" class="search-input" value="{{currentSearchInput}}" />
+                <input type="text" class="search-input" value="{{currentSearchInput}}" placeholder="{{localize 'asset-auditor.app.search-placeholder'}}" />
                 <button type="button" class="delete-search-button" title="{{localize "
                     asset-auditor.app.delete-search-button" }}" style="width: 25px; background: none; border: none;">
                     <i class="fa fa-xmark"></i>
@@ -49,7 +49,18 @@
             {{#each group.assets as |asset|}}
             <div class="asset-row" style="display: flex; align-items: start; {{#unless asset.isValid}}color: red;{{/unless}}">
                 <i class="asset-status {{asset.icon}}" style="width: 25px;"></i>
-                <span style="width: 150px; overflow-wrap: anywhere; padding-right: 4px;">{{asset.name}}</span>
+                <span class="asset-identity" style="width: 150px; overflow-wrap: anywhere; padding-right: 4px;">
+                    {{asset.name}}
+                    {{#if asset.parentName}}
+                    <small class="asset-context" style="display: block; margin-top: 3px;">
+                        {{#if (eq asset.parentType "Scene")}}{{localize "asset-auditor.app.context-Scene"}}:
+                        {{else if (eq asset.parentType "Actor")}}{{localize "asset-auditor.app.context-Actor"}}:
+                        {{else if (eq asset.parentType "Playlist")}}{{localize "asset-auditor.app.context-Playlist"}}:
+                        {{else if (eq asset.parentType "JournalEntry")}}{{localize "asset-auditor.app.context-JournalEntry"}}:
+                        {{/if}}{{asset.parentName}}
+                    </small>
+                    {{/if}}
+                </span>
                 <input type="text" value="{{asset.path}}" data-original-value="{{asset.path}}" class="path-input"
                     style="width: 750px;" />
                 <button type="button" class="reset-button" title="{{localize " asset-auditor.app.reset-button" }}"

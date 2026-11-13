@@ -1,4 +1,5 @@
-const constructedIdMarker = "_ID_GENERATED_BY_ASSET_AUDITOR";
+import { getPrototypeActor } from "./asset-identity.js";
+
 const domainCache = {};
 let isWindowsPlatform;
 
@@ -14,29 +15,20 @@ async function isWindows() {
 }
 
 
-function isIdConstructed(id) {
-    return id.includes(constructedIdMarker);
-}
-
 function getAssets(collectionName, extractAssets) {
     const assets = [];
-    const assetIds = new Set();
-    const collection = game.collections.get(collectionName);
-
-    collection.forEach(item => {
-        const items = extractAssets(item);
-        if (items.length === 1 && !items[0]._id) {
-            const constructedId = item._id + "_" + items[0].constructor.name + constructedIdMarker;
-            items[0]._id = constructedId;
-        }
-        items.forEach(asset => {
-            if (!assetIds.has(asset._id)) {
+    const identities = new Set();
+    for (const item of game.collections.get(collectionName) ?? []) {
+        for (const asset of extractAssets(item) ?? []) {
+            if (!asset) continue;
+            // Embedded IDs are unique within their parent, not across the world.
+            const identity = asset.uuid ?? asset;
+            if (!identities.has(identity)) {
+                identities.add(identity);
                 assets.push(asset);
-                assetIds.add(asset._id);
             }
-        });
-    });
-
+        }
+    }
     return assets;
 }
 
@@ -110,11 +102,16 @@ function getAssetPath(asset) {
 async function setAssetPath(asset, path) {
     for (const [assetType, propertyPath] of assetPathMap.entries()) {
         if (asset instanceof assetType) {
-            await asset.update({ [propertyPath]: path });
-            return;
+            if (asset instanceof foundry.data.PrototypeToken) {
+                const actor = getPrototypeActor(asset);
+                if (!actor) throw new Error("The prototype token's actor is no longer available.");
+                await actor.update({ [`prototypeToken.${propertyPath}`]: path });
+                return actor.prototypeToken;
+            }
+            return (await asset.update({ [propertyPath]: path })) ?? asset;
         }
     }
-    showAssetTypeError(asset.constructor.name);
+    throw new Error(`Unsupported asset type: ${asset.constructor.name}`);
 }
 
 function getIcon(asset, isValid) {
@@ -171,6 +168,14 @@ function collectAssetDirectories(pointerGroups) {
     return Array.from(assetDirs);
 }
 
+// Asset URLs can resolve to either User Data or Foundry's built-in Core Data.
+async function browseAssetSources(target, options = {}) {
+    const results = await Promise.allSettled(
+        ["data", "public"].map(source => FilePicker.browse(source, target, options))
+    );
+    return results.filter(result => result.status === "fulfilled").map(result => result.value);
+}
+
 async function initializeFileCache(assetDirs) {
     isWindowsPlatform = await isWindows();
     const fileCache = {};
@@ -180,7 +185,8 @@ async function initializeFileCache(assetDirs) {
         }
         if (!fileCache.hasOwnProperty(dir)) {
             try {
-                const fileResult = await FilePicker.browse("data", dir);
+                const listings = await browseAssetSources(dir);
+                const fileResult = {files: listings.flatMap(listing => listing.files)};
                 if (isWindowsPlatform) {
                     dir = dir.toLowerCase();
                     fileResult.files = fileResult.files.map(file => file.toLowerCase());
@@ -256,7 +262,8 @@ function containsWildcard(path) {
 
 // Heavily inspired by https://github.com/League-of-Foundry-Developers/scene-packer/blob/main/scripts/assets/file.js
 async function wildcardExpandsToAtLeastOne(path) {
-    const base = await FilePicker.browse("data", path, { wildcard: true });
+    const listings = await browseAssetSources(path, { wildcard: true });
+    const base = {files: listings.flatMap(listing => listing.files)};
     if (!base.files.length) {
         return false;
     }
@@ -283,12 +290,7 @@ async function isValidHttpDomain(path) {
 }
 
 async function dirExists(dir) {
-    try {
-        const result = await FilePicker.browse("data", dir);
-        return true;
-    } catch (error) {
-        return false;
-    }
+    return (await browseAssetSources(dir)).length > 0;
 }
 
 async function getLastValidPath(inputPath) {
@@ -340,7 +342,8 @@ async function getAllAssets(invalidOnly, searchText, singularType) {
 
         if (searchText) {
             const search = searchText;
-            mappedAssets = mappedAssets.filter(asset => asset.name.includes(search) || asset.path.includes(search));
+            mappedAssets = mappedAssets.filter(asset => asset.name.includes(search) || asset.path.includes(search)
+                || (asset.asset.parent?.name ?? '').includes(search));
         }
 
         mappedAssets.sort((a, b) => a.name.localeCompare(b.name));
@@ -366,19 +369,15 @@ async function assetPointerToObject(asset, fileCache) {
     if (!asset) {
         return null;
     }
-    const id = asset._id;
-    if (!id) {
-        return null;
-    }
-    if (isIdConstructed(id)) {
-        asset._id = null;
-    }
+    const owner = asset instanceof foundry.data.PrototypeToken ? getPrototypeActor(asset) : null;
+    const id = asset.uuid ?? (owner ? `${owner.uuid}.prototypeToken` : asset.id ?? asset._id);
+    if (!id) return null;
     const name = asset.name ?? '';
     if (!name) {
         return null;
     }
     const path = getAssetPath(asset);
-    if (!path || path.startsWith("icons/")) {
+    if (!path) {
         return null;
     }
     const type = asset.constructor.name;
@@ -395,6 +394,8 @@ async function assetPointerToObject(asset, fileCache) {
     }
     return {
         asset: asset,
+        parentName: asset.parent?.name ?? '',
+        parentType: asset.parent?.documentName ?? '',
         icon: icon,
         id: id,
         isValid: isValid,
