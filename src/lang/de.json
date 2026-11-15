@@ -21,6 +21,7 @@
     "asset-auditor.settings.run-on-startup": "Asset Audit beim Start durchführen",
     "asset-auditor.settings.run-on-startup-hint": "Dies führt das Asset Audit beim Start durch und zeigt eine Fehlermeldung, falls ungültige Dateipfade gefunden werden.",
     "asset-auditor.sidebar-not-found": "Der Spieleinstellungen Abschnitt konnte nicht im HTML gefunden werden. Der Assets Button kann nicht angezeigt werden.",
+    "asset-auditor.app.save-error": "Der Dateipfad konnte nicht vollständig gespeichert und geprüft werden. Bitte neu prüfen; Details stehen in der Browser-Konsole.",
     "asset-auditor.app.refresh-index": "Index aktualisieren",
     "asset-auditor.app.refresh-index-hint": "Alle Dokumente und Dateipfade erneut prüfen. Suche und Filter verwenden den gespeicherten Index.",
     "asset-auditor.app.index-refresh-error": "Der Asset-Index konnte nicht aktualisiert werden. Die bisherigen Ergebnisse bleiben verfügbar."

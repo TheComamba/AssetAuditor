@@ -1,11 +1,14 @@
 import { auditIndex } from "../scripts/asset-index.js";
-import { getAllAssetTypes } from "../scripts/asset-aggregation.js";
+import { getAllAssetTypes, getAssetPath, getLastValidPath, checkAssetPath, getIcon } from "../scripts/asset-aggregation.js";
 
 class AssetFilepaths extends Application {
     constructor() {
         super();
         this.context = {};
         this._index = auditIndex;
+        this._savingAssets = new Set();
+        this._refreshRequested = false;
+        this._loading = false;
         this.showInvalidOnly = false;
         this.currentSearchInput = '';
         this.searchText = '';
@@ -26,7 +29,12 @@ class AssetFilepaths extends Application {
         this.context.replaceText = this.replaceText;
         this.context.assetTypes = getAllAssetTypes();
         this.context.singularType = this.singularType;
-        this.context.assets = await this._index.query(this.showInvalidOnly, this.searchText, this.singularType);
+        this._loading = true;
+        try {
+            this.context.assets = await this._index.query(this.showInvalidOnly, this.searchText, this.singularType);
+        } finally {
+            this._loading = false;
+        }
         return this.context;
     }
 
@@ -45,6 +53,7 @@ class AssetFilepaths extends Application {
                 this.refresh(html);
             }
         });
+
 
         html.find('#toggle-invalid').change(async (event) => {
             this.showInvalidOnly = event.target.checked;
@@ -73,18 +82,7 @@ class AssetFilepaths extends Application {
         });
 
         html.find('.update-button').click(async (event) => {
-            const updateButton = $(event.currentTarget);
-            const resetButton = updateButton.siblings('.reset-button');
-            const input = updateButton.siblings('.path-input');
-            const inputValue = input.val();
-            const assetId = updateButton.data('asset-id');
-            await this.updateAssetPath(assetId, inputValue);
-            input.data('original-value', inputValue);
-            resetButton.css('opacity', 0);
-            resetButton.prop('disabled', true);
-            updateButton.css('opacity', 0);
-            updateButton.prop('disabled', true);
-            this.refresh(html);
+            await this.saveAssetRow($(event.currentTarget), html);
         });
 
         html.find('.reset-button').click((event) => {
@@ -97,7 +95,6 @@ class AssetFilepaths extends Application {
             resetButton.prop('disabled', true);
             updateButton.css('opacity', 0);
             updateButton.prop('disabled', true);
-            this.refresh(html);
         });
 
         html.find('.browse-button').click(async (event) => {
@@ -114,21 +111,16 @@ class AssetFilepaths extends Application {
                 type: 'any',
                 current: lastValidPath,
                 callback: async (path) => {
-                    input.val(path);
-                    await this.updateAssetPath(assetId, path);
-                    input.data('original-value', path);
-                    const resetButton = browseButton.siblings('.reset-button');
-                    const updateBurron = browseButton.siblings('.update-button');
-                    resetButton.css('opacity', 0);
-                    resetButton.prop('disabled', true);
-                    updateBurron.css('opacity', 0);
-                    updateBurron.prop('disabled', true);
+                    // An intervening render/filter can invalidate the captured row.
+                    if (!input[0]?.isConnected || this._loading || this.findAsset(assetId) !== asset) return;
+                    input.val(path).trigger('input');
+                    await this.saveAssetRow(browseButton.siblings('.update-button'), html);
                 },
                 top: this.position.top + 40,
                 left: this.position.left + 10
             });
+            // browse() opens the picker; selection happens later in its callback.
             await filePicker.browse(lastValidPath);
-            this.refresh(html);
         });
 
         html.find('.path-input').on('input', (event) => {
@@ -199,16 +191,25 @@ class AssetFilepaths extends Application {
     }
 
     async performReplacement(html) {
+        if (!this.currentSearchInput.trim() || this._loading || this._savingAssets.size) return;
         this.searchText = this.currentSearchInput;
         const entries = this.context.assets.flatMap(group => group.assets);
-        for (const entry of entries) {
-            const currentPath = entry.path;
-            if (currentPath.includes(this.searchText)) {
-                const newPath = currentPath.replace(this.searchText, this.replaceText);
-                await this._index.save(entry, newPath);
+        this._savingAssets.add("batch");
+        html.find('button, input, select').prop('disabled', true);
+        try {
+            for (const entry of entries) {
+                const currentPath = entry.path;
+                if (currentPath.includes(this.searchText)) {
+                    await this._index.save(entry, currentPath.replace(this.searchText, this.replaceText));
+                }
             }
+        } catch (error) {
+            console.error("Asset Auditor | Replacement stopped", error);
+            ui.notifications.error(game.i18n.localize("asset-auditor.app.save-error"));
+        } finally {
+            this._savingAssets.delete("batch");
+            this.refresh(html);
         }
-        this.refresh(html);
     }
 
     performSearch(html) {
@@ -216,9 +217,13 @@ class AssetFilepaths extends Application {
         this.refresh(html);
     }
 
-    refresh(html) {
-        this.render();
-        this.updateOperability(html);
+    refresh(html = $(this.element)) {
+        this._refreshRequested = true;
+        if (this._savingAssets.size || this._loading) return;
+        this._refreshRequested = false;
+        this._loading = true;
+        html.find('button, input, select').prop('disabled', true);
+        return this.render();
     }
 
     updateOperability(html) {
@@ -243,6 +248,55 @@ class AssetFilepaths extends Application {
         } else {
             deleteReplaceButton.prop('disabled', true);
             deleteReplaceButton.css('opacity', 0);
+        }
+    }
+
+    async saveAssetRow(updateButton, html) {
+        const assetId = updateButton.data('asset-id');
+        if (this._loading || this._savingAssets.has("batch") || this._savingAssets.has(assetId)) return;
+        this._savingAssets.add(assetId);
+        const row = updateButton.closest('.asset-row');
+        const controls = row.find('button, input');
+        controls.prop('disabled', true);
+        const input = updateButton.siblings('.path-input');
+        try {
+            const entry = this.findAsset(assetId);
+            if (!entry) return;
+            await this.updateAssetPath(assetId, input.val());
+            const savedPath = getAssetPath(entry.asset);
+            const isValid = await checkAssetPath(savedPath);
+            const lastValidPath = isValid ? '' : await getLastValidPath(savedPath);
+            Object.assign(entry, {path: savedPath, isValid, lastValidPath});
+            input.val(savedPath).data('original-value', savedPath);
+            row.next('.asset-invalid-hint').remove();
+            if (this.showInvalidOnly && isValid) {
+                row.remove();
+                for (const group of this.context.assets) {
+                    group.assets = group.assets.filter(candidate => candidate !== entry);
+                }
+            } else {
+                // Update this usage in place so unrelated drafts stay intact.
+                row.css('color', isValid ? '' : 'red');
+                entry.icon = getIcon(entry.asset, isValid);
+                row.find('.asset-status').attr('class', 'asset-status ' + entry.icon);
+                if (!isValid) {
+                    const hint = $('<div class="asset-invalid-hint" style="margin-bottom: 10px;"></div>');
+                    $('<span></span>').text(game.i18n.localize("asset-auditor.app.last-valid-path") + ' ').appendTo(hint);
+                    $('<span></span>').text(lastValidPath).appendTo(hint);
+                    row.after(hint);
+                }
+            }
+            html.trigger('asset-auditor:path-saved', [entry, row[0]]);
+        } catch (error) {
+            console.error("Asset Auditor | Could not save asset path", error);
+            ui.notifications.error(game.i18n.localize("asset-auditor.app.save-error"));
+        } finally {
+            this._savingAssets.delete(assetId);
+            controls.prop('disabled', false);
+            const dirty = input.val() !== input.data('original-value');
+            updateButton.add(updateButton.siblings('.reset-button'))
+                .prop('disabled', !dirty).css('opacity', dirty ? 1 : 0);
+            if (!this._savingAssets.size && this._refreshRequested) this.refresh(html);
         }
     }
 
