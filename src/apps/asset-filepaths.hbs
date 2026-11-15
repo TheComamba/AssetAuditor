@@ -44,6 +44,15 @@
                 <i class="asset-status {{asset.icon}}" aria-hidden="true"></i>
                 <span class="asset-identity">
                     {{asset.name}}
+                    {{#if asset.parentName}}
+                    <small class="asset-context" style="display: block; margin-top: 3px;">
+                        {{#if (eq asset.parentType "Scene")}}{{localize "asset-auditor.app.context-Scene"}}:
+                        {{else if (eq asset.parentType "Actor")}}{{localize "asset-auditor.app.context-Actor"}}:
+                        {{else if (eq asset.parentType "Playlist")}}{{localize "asset-auditor.app.context-Playlist"}}:
+                        {{else if (eq asset.parentType "JournalEntry")}}{{localize "asset-auditor.app.context-JournalEntry"}}:
+                        {{/if}}{{asset.parentName}}
+                    </small>
+                    {{/if}}
                 </span>
                 <input type="text" value="{{asset.path}}" data-original-value="{{asset.path}}" class="path-input" aria-label="{{localize 'asset-auditor.app.path-label'}}: {{asset.name}}" />
                 <button type="button" class="reset-button icon" aria-label="{{localize 'asset-auditor.app.reset-button'}}" title="{{localize 'asset-auditor.app.reset-button'}}" data-asset-id="{{asset.id}}" disabled><i class="fas fa-undo" aria-hidden="true"></i></button>

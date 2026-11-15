@@ -54,7 +54,8 @@ test('manual save and reset remain usable with the V2 template and disabled-butt
     const subject = actor();listing('data', 'images', ['images/new.webp']);const app = await open();
     let input = app.element.querySelector('.path-input');input.value = 'images/new.webp';input.dispatchEvent(new window.Event('input'));
     const save = app.element.querySelector('.update-button');assert.equal(save.disabled, false);assert.equal(save.style.opacity, '');save.click();
-    await waitFor(() => subject.img === 'images/new.webp' && app.element.querySelector('.update-button').disabled);
+    await waitFor(() => subject.img === 'images/new.webp' && app.element.querySelector('.update-button').disabled && !app.element.querySelector('.path-input').disabled);
+    assert.equal(app.element.querySelector('.asset-row').classList.contains('is-invalid'), false);
     input = app.element.querySelector('.path-input');input.value = 'unsaved.webp';input.dispatchEvent(new window.Event('input'));
     app.element.querySelector('.reset-button').click();
     await waitFor(() => app.element.querySelector('.path-input').value === 'images/new.webp');

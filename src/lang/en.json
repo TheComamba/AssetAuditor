@@ -11,6 +11,11 @@
     "asset-auditor.app.asset-not-found": "Asset with ID {id} was not found.",
     "asset-auditor.app.filter-assets": "Show only assets of type",
     "asset-auditor.app.invalid-only": "Show only invalid filepaths",
+    "asset-auditor.app.context-Scene": "Scene",
+    "asset-auditor.app.context-Actor": "Actor",
+    "asset-auditor.app.context-Playlist": "Playlist",
+    "asset-auditor.app.context-JournalEntry": "Journal",
+    "asset-auditor.app.search-placeholder": "Name, scene or file path",
     "asset-auditor.app.last-valid-path": "Last valid path:",
     "asset-auditor.app.delete-search-button": "Clear search field",
     "asset-auditor.app.search-search-button": "Search assets",
@@ -22,5 +27,6 @@
     "asset-auditor.invalid-assets-found": "Asset Auditor found {count} invalid filepaths.",
     "asset-auditor.settings.run-on-startup": "Run asset audit on startup",
     "asset-auditor.settings.run-on-startup-hint": "This will run the asset audit on startup and display an error message if any invalid filepaths are found.",
-    "asset-auditor.sidebar-not-found": "The game settings sidebar section could not be found in HTML. The assets button cannot be rendered."
+    "asset-auditor.sidebar-not-found": "The game settings sidebar section could not be found in HTML. The assets button cannot be rendered.",
+    "asset-auditor.app.save-error": "The asset path could not be fully saved and checked. Please recheck; see the browser console for details."
 }
