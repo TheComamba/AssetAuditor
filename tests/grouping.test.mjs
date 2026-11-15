@@ -1,6 +1,6 @@
 import {test, beforeEach} from 'node:test';
 import assert from 'node:assert/strict';
-import {reset, actor, env, AssetFilepaths, waitFor} from './helpers/foundry.mjs';
+import {reset, actor, listing, env, AssetFilepaths, waitFor} from './helpers/foundry.mjs';
 beforeEach(reset);
 const flush = () => new Promise(resolve => setTimeout(resolve, 0));
 async function open(type = 'Actor') {
@@ -126,4 +126,26 @@ test('unrelated toolbar updates preserve a group that the user collapsed', async
     actor();const app = await open();const group = groups(app)[0];group.open = false;
     const search = app.element.querySelector('.search-input');search.value = 'draft search';search.dispatchEvent(new window.Event('input'));
     await flush();assert.equal(group.open, false);
+});
+
+test('manual save regroups the persisted row and keeps an unrelated draft with upstream save lifecycle', async () => {
+    const subject = actor('one');actor('two');actor('other', 'other/portrait.webp');const app = await open();
+    listing('data', 'other', ['other/portrait.webp']);
+    const rows = [...app.element.querySelectorAll('.asset-row')];
+    const row = rows.find(row => row.querySelector('.update-button').dataset.assetId === subject.uuid);
+    const other = rows.find(candidate => candidate !== row);other.querySelector('.path-input').value = 'unsaved.webp';
+    row.querySelector('.path-input').value = 'other/portrait.webp';
+    await app.saveAssetRow($(row.querySelector('.update-button')), $(app.element));
+    await waitFor(() => row.parentElement === groupAt(app, 'other/portrait.webp'));
+    assert.equal(subject.img, 'other/portrait.webp');
+    assert.equal(other.querySelector('.path-input').value, 'unsaved.webp');
+    assert.equal(row.querySelector('.path-input').value, 'other/portrait.webp');
+});
+test('picker autosave removes a repaired invalid usage without dropping another draft', async () => {
+    actor('one');actor('two');const app = new AssetFilepaths();app.singularType = 'Actor';app.showInvalidOnly = true;await app.render();
+    listing('data', 'images', ['images/fixed.webp']);
+    const [row, other] = app.element.querySelectorAll('.asset-row');other.querySelector('.path-input').value = 'draft.webp';
+    row.querySelector('.browse-button').click();await env.pickers[0].options.callback('images/fixed.webp');
+    await waitFor(() => app.element.querySelector('.asset-group-count').textContent.includes('1 usages'));
+    assert.equal(row.isConnected, false);assert.equal(other.querySelector('.path-input').value, 'draft.webp');
 });
