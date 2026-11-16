@@ -1,4 +1,6 @@
 {
+    "asset-auditor.app.open-original": "Original öffnen",
+    "asset-auditor.app.open-original-error": "Das Original konnte nicht geöffnet werden. Möglicherweise wurde es gelöscht oder es fehlen Zugriffsrechte. Details stehen in der Browser-Konsole.",
     "asset-auditor.asset-aggregation.type-error": "Asset Typ \"{type}\" ist nicht unterstützt.",
     "asset-auditor.asset-filepaths": "Asset Dateipfade",
     "asset-auditor.app.asset-not-found": "Asset mit ID {id} wurde nicht gefunden.",

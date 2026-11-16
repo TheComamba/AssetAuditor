@@ -1,4 +1,6 @@
 {
+    "asset-auditor.app.open-original": "Open original",
+    "asset-auditor.app.open-original-error": "Could not open the original. It may have been deleted or access may be restricted. See the browser console for details.",
     "asset-auditor.asset-aggregation.type-error": "Asset type \"{type}\" is not supported.",
     "asset-auditor.asset-filepaths": "Asset Filepaths",
     "asset-auditor.app.asset-not-found": "Asset with ID {id} was not found.",
