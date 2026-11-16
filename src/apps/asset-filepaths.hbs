@@ -45,6 +45,7 @@
     <section>
         <div>
             {{#each assets as |group|}}
+            <div class="asset-type-group" data-asset-type="{{group.type}}">
             <h2>{{group.type}}</h2>
             {{#each group.assets as |asset|}}
             <div class="asset-row" style="display: flex; align-items: start; {{#unless asset.isValid}}color: red;{{/unless}}">
@@ -86,6 +87,7 @@
             </div>
             {{/unless}}
             {{/each}}
+            </div>
             {{/each}}
         </div>
     </section>

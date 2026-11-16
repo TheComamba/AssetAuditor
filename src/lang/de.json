@@ -16,6 +16,8 @@
     "asset-auditor.app.replace-button": "Ersetze alle",
     "asset-auditor.app.reset-button": "Setze Pfadänderungen zurück",
     "asset-auditor.app.browse-button": "Durchsuche das Dateisystem",
+    "asset-auditor.app.token-usages": "{count} betroffene Tokens",
+    "asset-auditor.app.asset-usages": "{count} Verwendungen",
     "asset-auditor.app.update-button": "Schreibe Pfad in Asset",
     "asset-auditor.invalid-assets-found": "Asset Auditor hat {count} invalide Dateipfade gefunden.",
     "asset-auditor.settings.run-on-startup": "Asset Audit beim Start durchführen",

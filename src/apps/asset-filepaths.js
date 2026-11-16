@@ -1,3 +1,4 @@
+import { groupAssetRows } from "./asset-groups.js";
 import { getAllAssets, getAllAssetTypes, getAssetPath, getLastValidPath, setAssetPath, checkAssetPath, getIcon } from "../scripts/asset-aggregation.js";
 
 class AssetFilepaths extends Application {
@@ -38,6 +39,11 @@ class AssetFilepaths extends Application {
 
     activateListeners(html) {
         super.activateListeners(html);
+        this._pathGroupObserver?.disconnect();
+        this._pathGroupObserver = groupAssetRows(html[0],
+            (key, values) => game.i18n.format(key, values),
+            input => $(input).data('original-value'));
+
 
         html.find('#toggle-invalid').change(async (event) => {
             this.showInvalidOnly = event.target.checked;
@@ -155,6 +161,11 @@ class AssetFilepaths extends Application {
             });
 
         this.updateOperability(html);
+    }
+
+    async close(options = {}) {
+        this._pathGroupObserver?.disconnect();
+        return super.close(options);
     }
 
     performDeleteReplace(event, html) {
