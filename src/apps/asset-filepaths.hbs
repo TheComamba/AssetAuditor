@@ -45,6 +45,7 @@
     <section>
         <div>
             {{#each assets as |group|}}
+            <div class="asset-type-group" data-asset-type="{{group.type}}">
             <h2>{{group.type}}</h2>
             {{#each group.assets as |asset|}}
             <div class="asset-row" style="display: flex; align-items: start; {{#unless asset.isValid}}color: red;{{/unless}}">
@@ -67,6 +68,12 @@
                     </small>
                     {{/if}}
                 </span>
+                <button type="button" class="open-original-button" data-asset-id="{{asset.id}}" data-asset-type="{{asset.type}}"
+                    title="{{localize 'asset-auditor.app.open-original'}}"
+                    aria-label="{{localize 'asset-auditor.app.open-original'}}: {{asset.name}}"
+                    style="width: 25px; background: none; border: none;">
+                    <i class="fas fa-arrow-up-right-from-square" aria-hidden="true"></i>
+                </button>
                 <input type="text" value="{{asset.path}}" data-original-value="{{asset.path}}" class="path-input"
                     style="width: 750px;" />
                 <button type="button" class="reset-button" title="{{localize " asset-auditor.app.reset-button" }}"
@@ -92,6 +99,7 @@
             </div>
             {{/unless}}
             {{/each}}
+            </div>
             {{/each}}
         </div>
     </section>

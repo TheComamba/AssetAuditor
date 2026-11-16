@@ -1,20 +1,6 @@
 import { getPrototypeActor } from "./asset-identity.js";
 
 const domainCache = {};
-let isWindowsPlatform;
-
-async function isWindows() {
-    if (navigator.userAgentData) {
-        const hints = ["platform"];
-        let data = await navigator.userAgentData.getHighEntropyValues(hints);
-        return data.platform === "Win32" || data.platform === "Windows";
-    } else {
-        console.log("User agent data not available.");
-        return false;
-    }
-}
-
-
 function getAssets(collectionName, extractAssets) {
     const assets = [];
     const identities = new Set();
@@ -177,7 +163,6 @@ async function browseAssetSources(target, options = {}) {
 }
 
 async function initializeFileCache(assetDirs) {
-    isWindowsPlatform = await isWindows();
     const fileCache = {};
     for (let dir of assetDirs) {
         if (isUrl(dir)) {
@@ -187,15 +172,8 @@ async function initializeFileCache(assetDirs) {
             try {
                 const listings = await browseAssetSources(dir);
                 const fileResult = {files: listings.flatMap(listing => listing.files)};
-                if (isWindowsPlatform) {
-                    dir = dir.toLowerCase();
-                    fileResult.files = fileResult.files.map(file => file.toLowerCase());
-                }
                 fileCache[dir] = fileResult.files;
             } catch (error) {
-                if (isWindowsPlatform) {
-                    dir = dir.toLowerCase();
-                }
                 fileCache[dir] = [];
             }
         }
@@ -203,23 +181,19 @@ async function initializeFileCache(assetDirs) {
     return fileCache;
 }
 
-function isFileContained(file, files) {
-    while (file.startsWith('/')) {
-        file = file.substring(1);
-    }
-    if (isWindowsPlatform) {
-        file = file.toLowerCase();
-    }
-    if (files.includes(file)) {
-        return true;
-    }
-    const encodedFile = encodeURI(file);
-    for (const f of files) {
-        if (f === encodedFile) {
-            return true;
-        }
-    }
-    return false;
+function normalizeLocalPath(path) {
+    const localPath = stripQueryString(path).replace(/^\/+/, "");
+    // Decode each filename component once. Keep component boundaries so an
+    // encoded slash cannot be mistaken for a real directory separator.
+    return JSON.stringify(localPath.split('/').map(component => {
+        try { return decodeURIComponent(component); }
+        catch { return component; }
+    }));
+}
+
+function isFileContained(file, files = []) {
+    const normalized = normalizeLocalPath(file);
+    return files.some(candidate => normalizeLocalPath(candidate) === normalized);
 }
 
 function isUrl(path) {
@@ -240,11 +214,7 @@ async function isValidPath(path, fileCache) {
 }
 
 async function isValidLocalPath(path, fileCache) {
-    let pathWithoutQuery = stripQueryString(path);
-    
-    if (isWindowsPlatform) {
-        pathWithoutQuery = pathWithoutQuery.toLowerCase();
-    }
+    const pathWithoutQuery = stripQueryString(path);
 
     if (containsWildcard(pathWithoutQuery)) {
         return await wildcardExpandsToAtLeastOne(pathWithoutQuery);
