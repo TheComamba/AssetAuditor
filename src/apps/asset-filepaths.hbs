@@ -61,6 +61,12 @@
                         {{/if}}{{asset.parentName}}
                     </small>
                     {{/if}}
+                    {{#if asset.isWildcard}}
+                    <small class="asset-wildcard-info" style="display: block; margin-top: 3px;"
+                        title="{{localize 'asset-auditor.app.wildcard-picker-warning'}}">
+                        {{localize "asset-auditor.app.wildcard-count" count=asset.wildcardCount}}
+                    </small>
+                    {{/if}}
                 </span>
                 <button type="button" class="open-original-button" data-asset-id="{{asset.id}}" data-asset-type="{{asset.type}}"
                     title="{{localize 'asset-auditor.app.open-original'}}"

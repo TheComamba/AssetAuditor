@@ -230,14 +230,19 @@ function containsWildcard(path) {
     return path.includes("*") || (path.includes("{") && path.includes("}"));
 }
 
-// Heavily inspired by https://github.com/League-of-Foundry-Developers/scene-packer/blob/main/scripts/assets/file.js
+function isWildcardPath(path) {
+    return !isUrl(path) && containsWildcard(stripQueryString(path));
+}
+
+async function wildcardMatchCount(path) {
+    const results = await Promise.allSettled(["data", "public"].map(source =>
+        FilePicker.browse(source, stripQueryString(path), {wildcard: true})));
+    const files = results.flatMap(result => result.status === "fulfilled" ? (result.value?.files ?? []) : []);
+    return new Set(files).size;
+}
+
 async function wildcardExpandsToAtLeastOne(path) {
-    const listings = await browseAssetSources(path, { wildcard: true });
-    const base = {files: listings.flatMap(listing => listing.files)};
-    if (!base.files.length) {
-        return false;
-    }
-    return base.files.length > 0;
+    return (await wildcardMatchCount(path)) > 0;
 }
 
 // Checking the full path is not possible due to CORS issues,
@@ -354,7 +359,9 @@ async function assetPointerToObject(asset, fileCache) {
     if (!type) {
         return null;
     }
-    const isValid = await isValidPath(path, fileCache);
+    const isWildcard = isWildcardPath(path);
+    const wildcardCount = isWildcard ? await wildcardMatchCount(path) : null;
+    const isValid = isWildcard ? wildcardCount > 0 : await isValidPath(path, fileCache);
     if (isValid === null) {
         return null;
     }
@@ -369,6 +376,8 @@ async function assetPointerToObject(asset, fileCache) {
         icon: icon,
         id: id,
         isValid: isValid,
+        isWildcard,
+        wildcardCount,
         name: name,
         path: path,
         type: type,
@@ -383,4 +392,4 @@ async function checkAssetPath(path) {
     return await isValidPath(path, await initializeFileCache([directory]));
 }
 
-export { getAllAssets, getAllAssetTypes, getAssetPath, getLastValidPath, setAssetPath, checkAssetPath, getIcon };
+export { getAllAssets, getAllAssetTypes, getAssetPath, getLastValidPath, setAssetPath, checkAssetPath, getIcon, isWildcardPath, wildcardMatchCount };

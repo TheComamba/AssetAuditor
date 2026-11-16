@@ -17,6 +17,8 @@
     "asset-auditor.app.delete-replace-button": "Clear replacement field",
     "asset-auditor.app.replace-button": "Replace all",
     "asset-auditor.app.reset-button": "Reset path modifications",
+    "asset-auditor.app.wildcard-count": "Wildcard · {count} matches",
+    "asset-auditor.app.wildcard-picker-warning": "This path is a wildcard pattern. Selecting a single file replaces the pattern and saves immediately. To preserve the pattern, edit the folder or pattern in the path field and save with the disk button.",
     "asset-auditor.app.browse-button": "Browse for file",
     "asset-auditor.app.token-usages": "{count} affected tokens",
     "asset-auditor.app.asset-usages": "{count} usages",
