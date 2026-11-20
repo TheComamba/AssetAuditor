@@ -1,20 +1,6 @@
 import { getPrototypeActor } from "./asset-identity.js";
 
 const domainCache = {};
-let isWindowsPlatform;
-
-async function isWindows() {
-    if (navigator.userAgentData) {
-        const hints = ["platform"];
-        let data = await navigator.userAgentData.getHighEntropyValues(hints);
-        return data.platform === "Win32" || data.platform === "Windows";
-    } else {
-        console.log("User agent data not available.");
-        return false;
-    }
-}
-
-
 function getAssets(collectionName, extractAssets) {
     const assets = [];
     const identities = new Set();
@@ -177,7 +163,6 @@ async function browseAssetSources(target, options = {}) {
 }
 
 async function initializeFileCache(assetDirs, onProgress) {
-    isWindowsPlatform = await isWindows();
     const fileCache = {};
     const directories = assetDirs.filter(dir => !isUrl(dir));
     let completed = 0;
@@ -187,15 +172,8 @@ async function initializeFileCache(assetDirs, onProgress) {
             try {
                 const listings = await browseAssetSources(dir);
                 const fileResult = {files: listings.flatMap(listing => listing.files)};
-                if (isWindowsPlatform) {
-                    dir = dir.toLowerCase();
-                    fileResult.files = fileResult.files.map(file => file.toLowerCase());
-                }
                 fileCache[dir] = fileResult.files;
             } catch (error) {
-                if (isWindowsPlatform) {
-                    dir = dir.toLowerCase();
-                }
                 fileCache[dir] = [];
             }
         }
@@ -204,23 +182,19 @@ async function initializeFileCache(assetDirs, onProgress) {
     return fileCache;
 }
 
-function isFileContained(file, files) {
-    while (file.startsWith('/')) {
-        file = file.substring(1);
-    }
-    if (isWindowsPlatform) {
-        file = file.toLowerCase();
-    }
-    if (files.includes(file)) {
-        return true;
-    }
-    const encodedFile = encodeURI(file);
-    for (const f of files) {
-        if (f === encodedFile) {
-            return true;
-        }
-    }
-    return false;
+function normalizeLocalPath(path) {
+    const localPath = stripQueryString(path).replace(/^\/+/, "");
+    // Decode each filename component once. Keep component boundaries so an
+    // encoded slash cannot be mistaken for a real directory separator.
+    return JSON.stringify(localPath.split('/').map(component => {
+        try { return decodeURIComponent(component); }
+        catch { return component; }
+    }));
+}
+
+function isFileContained(file, files = []) {
+    const normalized = normalizeLocalPath(file);
+    return files.some(candidate => normalizeLocalPath(candidate) === normalized);
 }
 
 function isUrl(path) {
@@ -241,11 +215,7 @@ async function isValidPath(path, fileCache) {
 }
 
 async function isValidLocalPath(path, fileCache) {
-    let pathWithoutQuery = stripQueryString(path);
-    
-    if (isWindowsPlatform) {
-        pathWithoutQuery = pathWithoutQuery.toLowerCase();
-    }
+    const pathWithoutQuery = stripQueryString(path);
 
     if (containsWildcard(pathWithoutQuery)) {
         return await wildcardExpandsToAtLeastOne(pathWithoutQuery);
@@ -261,14 +231,19 @@ function containsWildcard(path) {
     return path.includes("*") || (path.includes("{") && path.includes("}"));
 }
 
-// Heavily inspired by https://github.com/League-of-Foundry-Developers/scene-packer/blob/main/scripts/assets/file.js
+function isWildcardPath(path) {
+    return !isUrl(path) && containsWildcard(stripQueryString(path));
+}
+
+async function wildcardMatchCount(path) {
+    const results = await Promise.allSettled(["data", "public"].map(source =>
+        FilePicker.browse(source, stripQueryString(path), {wildcard: true})));
+    const files = results.flatMap(result => result.status === "fulfilled" ? (result.value?.files ?? []) : []);
+    return new Set(files).size;
+}
+
 async function wildcardExpandsToAtLeastOne(path) {
-    const listings = await browseAssetSources(path, { wildcard: true });
-    const base = {files: listings.flatMap(listing => listing.files)};
-    if (!base.files.length) {
-        return false;
-    }
-    return base.files.length > 0;
+    return (await wildcardMatchCount(path)) > 0;
 }
 
 // Checking the full path is not possible due to CORS issues,
@@ -390,7 +365,9 @@ async function assetPointerToObject(asset, fileCache) {
     if (!type) {
         return null;
     }
-    const isValid = await isValidPath(path, fileCache);
+    const isWildcard = isWildcardPath(path);
+    const wildcardCount = isWildcard ? await wildcardMatchCount(path) : null;
+    const isValid = isWildcard ? wildcardCount > 0 : await isValidPath(path, fileCache);
     if (isValid === null) {
         return null;
     }
@@ -405,6 +382,8 @@ async function assetPointerToObject(asset, fileCache) {
         icon: icon,
         id: id,
         isValid: isValid,
+        isWildcard,
+        wildcardCount,
         name: name,
         path: path,
         type: type,
@@ -419,4 +398,4 @@ async function checkAssetPath(path) {
     return await isValidPath(path, await initializeFileCache([directory]));
 }
 
-export { getAllAssets, getAllAssetTypes, getAssetPath, getLastValidPath, setAssetPath, checkAssetPath, getIcon };
+export { getAllAssets, getAllAssetTypes, getAssetPath, getLastValidPath, setAssetPath, checkAssetPath, getIcon, isWildcardPath, wildcardMatchCount };
