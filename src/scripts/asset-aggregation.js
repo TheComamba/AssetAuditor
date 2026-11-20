@@ -384,6 +384,14 @@ async function assetPointerToObject(asset, fileCache) {
     };
 }
 
+// Revalidate one edited usage without scanning unrelated documents or folders.
+async function refreshAssetEntry(asset) {
+    const directories = collectAssetDirectories([{collection: [asset]}]);
+    const entry = await assetPointerToObject(asset, await initializeFileCache(directories));
+    if (entry && !entry.isValid) entry.lastValidPath = await getLastValidPath(entry.path);
+    return entry;
+}
+
 // Revalidate saved paths against a fresh listing rather than the scan's cache.
 async function checkAssetPath(path) {
     if (!path) return false;
@@ -392,4 +400,4 @@ async function checkAssetPath(path) {
     return await isValidPath(path, await initializeFileCache([directory]));
 }
 
-export { getAllAssets, getAllAssetTypes, getAssetPath, getLastValidPath, setAssetPath, checkAssetPath, getIcon, isWildcardPath, wildcardMatchCount };
+export { getAllAssets, getAllAssetTypes, getAssetPath, getLastValidPath, setAssetPath, checkAssetPath, getIcon, isWildcardPath, wildcardMatchCount, refreshAssetEntry };

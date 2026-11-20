@@ -1,7 +1,8 @@
+import { auditIndex } from "../scripts/asset-index.js";
 
 import { groupAssetRows } from "./asset-groups.js";
 import { updateWildcardFeedback } from "./asset-wildcards.js";
-import { getAllAssets, getAllAssetTypes, getAssetPath, getLastValidPath, setAssetPath, checkAssetPath, getIcon, isWildcardPath } from "../scripts/asset-aggregation.js";
+import { getAllAssetTypes, getAssetPath, getLastValidPath, checkAssetPath, getIcon, isWildcardPath } from "../scripts/asset-aggregation.js";
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
@@ -21,6 +22,7 @@ class AssetFilepaths extends HandlebarsApplicationMixin(ApplicationV2) {
     constructor(options = {}) {
         super(options);
         this.context = {};
+        this._index = auditIndex;
         this._savingAssets = new Set();
         this._refreshRequested = false;
         this._loading = false;
@@ -42,7 +44,7 @@ class AssetFilepaths extends HandlebarsApplicationMixin(ApplicationV2) {
         this.context.singularType = this.singularType;
         this._loading = true;
         try {
-            this.context.assets = await getAllAssets(this.showInvalidOnly, this.searchText, this.singularType);
+            this.context.assets = await this._index.query(this.showInvalidOnly, this.searchText, this.singularType);
         } finally {
             this._loading = false;
         }
@@ -81,6 +83,20 @@ class AssetFilepaths extends HandlebarsApplicationMixin(ApplicationV2) {
                 button.disabled = false;
             }
         });
+
+        html.find('.rebuild-index-button').click(async () => {
+            const controls = html.find('button, input, select');
+            controls.prop('disabled', true);
+            try {
+                await this._index.rebuild();
+            } catch (error) {
+                console.error("Asset Auditor | Could not refresh index", error);
+                ui.notifications.error(game.i18n.localize("asset-auditor.app.index-refresh-error"));
+            } finally {
+                this.refresh(html);
+            }
+        });
+
 
         html.find('#toggle-invalid').change(async (event) => {
             this.showInvalidOnly = event.target.checked;
@@ -230,14 +246,14 @@ class AssetFilepaths extends HandlebarsApplicationMixin(ApplicationV2) {
     async performReplacement(html) {
         if (!this.currentSearchInput.trim() || this._loading || this._savingAssets.size) return;
         this.searchText = this.currentSearchInput;
-        const assets = this.context.assets.flatMap(assetMap => assetMap.assets.map(asset => asset.asset));
+        const entries = this.context.assets.flatMap(group => group.assets);
         this._savingAssets.add("batch");
         html.find('button, input, select').prop('disabled', true);
         try {
-            for (const asset of assets) {
-                const currentPath = getAssetPath(asset);
+            for (const entry of entries) {
+                const currentPath = entry.path;
                 if (currentPath.includes(this.searchText)) {
-                    await setAssetPath(asset, currentPath.replace(this.searchText, this.replaceText));
+                    await this._index.save(entry, currentPath.replace(this.searchText, this.replaceText));
                 }
             }
         } catch (error) {
@@ -353,7 +369,7 @@ class AssetFilepaths extends HandlebarsApplicationMixin(ApplicationV2) {
             ui.notifications.error(game.i18n.format("asset-auditor.app.asset-not-found", { id: assetId }));
             return;
         }
-        asset.asset = await setAssetPath(asset.asset, inputValue);
+        await this._index.save(asset, inputValue);
     };
 }
 
