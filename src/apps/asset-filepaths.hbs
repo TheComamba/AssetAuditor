@@ -53,7 +53,18 @@
                         {{/if}}{{asset.parentName}}
                     </small>
                     {{/if}}
+                    {{#if asset.isWildcard}}
+                    <small class="asset-wildcard-info" style="display: block; margin-top: 3px;"
+                        title="{{localize 'asset-auditor.app.wildcard-picker-warning'}}">
+                        {{localize "asset-auditor.app.wildcard-count" count=asset.wildcardCount}}
+                    </small>
+                    {{/if}}
                 </span>
+                <button type="button" class="open-original-button icon" data-asset-id="{{asset.id}}" data-asset-type="{{asset.type}}"
+                    title="{{localize 'asset-auditor.app.open-original'}}"
+                    aria-label="{{localize 'asset-auditor.app.open-original'}}: {{asset.name}}">
+                    <i class="fas fa-arrow-up-right-from-square" aria-hidden="true"></i>
+                </button>
                 <input type="text" value="{{asset.path}}" data-original-value="{{asset.path}}" class="path-input" aria-label="{{localize 'asset-auditor.app.path-label'}}: {{asset.name}}" />
                 <button type="button" class="reset-button icon" aria-label="{{localize 'asset-auditor.app.reset-button'}}" title="{{localize 'asset-auditor.app.reset-button'}}" data-asset-id="{{asset.id}}" disabled><i class="fas fa-undo" aria-hidden="true"></i></button>
                 <button type="button" class="browse-button icon" aria-label="{{localize 'asset-auditor.app.browse-button'}}" title="{{localize 'asset-auditor.app.browse-button'}}" data-asset-id="{{asset.id}}"><i class="fas fa-folder-open" aria-hidden="true"></i></button>

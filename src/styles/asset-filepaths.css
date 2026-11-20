@@ -14,7 +14,7 @@
 .asset-auditor .asset-input-controls input { flex: 1; min-width: 0; }
 .asset-auditor .asset-type-filter, .asset-auditor .asset-invalid-filter { display: flex; align-items: center; gap: 8px; }
 .asset-auditor .asset-type-filter select { width: auto; min-width: 150px; }
-.asset-auditor .asset-results { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 16px; scrollbar-gutter: stable; }
+.asset-auditor .asset-results { flex: 1 1 auto; min-height: 0; margin: 0; overflow-y: scroll; padding: 16px; scrollbar-gutter: stable; scrollbar-width: auto; scrollbar-color: var(--color-text-secondary, #888) var(--color-bg-option, rgba(0, 0, 0, .15)); }
 .asset-auditor .asset-results h2 { margin: 20px 0 10px; font-size: var(--font-size-18); }
 .asset-auditor .asset-results h2:first-child { margin-top: 0; }
 .asset-auditor .asset-path-group { border: 1px solid var(--color-border-light-primary); border-radius: 5px; margin-bottom: 8px; overflow: hidden; }
@@ -42,3 +42,7 @@
   .asset-auditor .asset-row { grid-template-columns: 18px minmax(100px, 1fr) repeat(3, 32px); grid-template-areas: "status identity reset browse save" ". path path path path"; }
   .asset-auditor .asset-row:has(.open-original-button) { grid-template-columns: 18px 32px minmax(100px, 1fr) repeat(3, 32px); grid-template-areas: "status original identity reset browse save" ". path path path path path"; }
 }
+
+.asset-auditor .asset-results::-webkit-scrollbar { width: 12px; }
+.asset-auditor .asset-results::-webkit-scrollbar-track { background: var(--color-bg-option, rgba(0, 0, 0, .15)); }
+.asset-auditor .asset-results::-webkit-scrollbar-thumb { background: var(--color-text-secondary, #888); border: 2px solid transparent; border-radius: 6px; background-clip: padding-box; }
