@@ -22,6 +22,8 @@ class PrototypeToken { constructor(data) { Object.assign(this, data); } }
 globalThis.foundry = {data: {PrototypeToken}};
 globalThis.navigator ??= {};
 globalThis.Application = class {async getData() {return {};} activateListeners() {}};
+class ApplicationV2 {async _prepareContext() {return {};} _onRender() {}}
+globalThis.foundry.applications = {api: {ApplicationV2, HandlebarsApplicationMixin: Base => class extends Base {}}};
 let calls, files;
 globalThis.FilePicker = {async browse(source, target) {
     calls.push({source, target});
@@ -105,6 +107,6 @@ test('prototype saves retain the refreshed model for subsequent cached edits', a
 });
 test('two audit windows share the index through the application context', async () => {
     actor('one'); const one = new AssetFilepaths(), two = new AssetFilepaths();
-    const context = await one.getData(); const count = calls.length; await two.getData();
+    const context = await one._prepareContext(); const count = calls.length; await two._prepareContext();
     assert.equal(one._index, two._index); assert(entries(context.assets).length > 0); assert.equal(calls.length, count);
 });
