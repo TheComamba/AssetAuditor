@@ -30,12 +30,13 @@ for (const name of ["Actor", "Item", "JournalEntryPage", "PlaylistSound", "Scene
 }
 export class PrototypeToken { constructor(data) { Object.assign(this, data); } }
 class Application {
+    async close() { this.rendered = false;this.element?.remove();return this; }
     constructor() { this.rendered = false; this.element = null; this.position = {top: 0, left: 0}; }
     async getData() { return {}; }
     activateListeners() {}
     async render() {
         const context = await this.getData();
-        this.element ??= document.body.appendChild(document.createElement("div"));
+        if (!this.element?.isConnected) this.element = document.body.appendChild(document.createElement("div"));
         this.element.innerHTML = template(context);
         this.rendered = true;
         this.activateListeners($(this.element));
@@ -108,3 +109,16 @@ export async function waitFor(predicate) {
 reset();
 
 export const {AssetFilepaths} = await import("../../src/apps/asset-filepaths.js");
+
+export async function waitForAudit(app) {
+    let previous;
+    while (app._scanPromise && app._scanPromise !== previous) {
+        previous = app._scanPromise;
+        await previous;
+    }
+    return app;
+}
+export async function renderAudit(app, options) {
+    await app.render(options);
+    return waitForAudit(app);
+}
