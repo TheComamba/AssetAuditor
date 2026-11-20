@@ -128,7 +128,12 @@ test("navigation errors notify the user and restore the button", async t => {
 test("navigation resolves system subclasses whose row type differs from the group", async () => {
     class SystemActor extends Actor {}
     const actor = new SystemActor('system-actor');actor.img = 'images/missing.webp';actor.sheet = sheet(actor);game.actors.push(actor);
-    const app = new AssetFilepaths();app.singularType = 'Actor';await app.getData();
+    const app = new AssetFilepaths();app.singularType = 'Actor';
+    await (app._prepareContext ? app._prepareContext() : app.getData());
+    if (app.scanAssets) {
+        await app.scanAssets();
+        await (app._prepareContext ? app._prepareContext() : app.getData());
+    }
     assert.equal(app.context.assets[0].type, 'Actor');
     const entry = app.context.assets[0].assets[0];assert.equal(entry.type, 'SystemActor');
     const button = {dataset: {assetId: entry.id, assetType: entry.type}, disabled: false};
