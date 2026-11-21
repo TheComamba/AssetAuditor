@@ -1,6 +1,6 @@
 import {test, beforeEach} from 'node:test';
 import assert from 'node:assert/strict';
-import {reset, actor, listing, env, AssetFilepaths, waitFor} from './helpers/foundry.mjs';
+import {reset, actor, listing, env, AssetFilepaths, waitFor, waitForAudit} from './helpers/foundry.mjs';
 beforeEach(reset);
 const flush = () => new Promise(resolve => setTimeout(resolve, 0));
 async function open(type = 'Actor') {
@@ -142,7 +142,7 @@ test('manual save regroups the persisted row and keeps an unrelated draft with u
     assert.equal(row.querySelector('.path-input').value, 'other/portrait.webp');
 });
 test('picker autosave removes a repaired invalid usage without dropping another draft', async () => {
-    actor('one');actor('two');const app = new AssetFilepaths();app.singularType = 'Actor';app.showInvalidOnly = true;await app.render();
+    actor('one');actor('two');const app = new AssetFilepaths();app.singularType = 'Actor';app.showInvalidOnly = true;await app.render();await waitForAudit(app);
     listing('data', 'images', ['images/fixed.webp']);
     const [row, other] = app.element.querySelectorAll('.asset-row');other.querySelector('.path-input').value = 'draft.webp';
     row.querySelector('.browse-button').click();await env.pickers[0].options.callback('images/fixed.webp');
