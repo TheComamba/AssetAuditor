@@ -1,7 +1,8 @@
 import { AssetFilepaths } from "../apps/asset-filepaths.js";
 import { getAllAssets } from "./asset-aggregation.js";
 
-// CONFIG.debug.hooks = true;
+let assetWindow;
+let windowRender;
 
 function isUserPermitted() {
     return game.user.role >= CONST.USER_ROLES.ASSISTANT;
@@ -40,12 +41,19 @@ Hooks.on("renderSidebar", async (app, html) => {
     let button_text = game.i18n.localize("asset-auditor.asset-filepaths");
     let $button = $(`<button class='asset-list'><i class='fas fa-file-edit'></i> ${button_text}</button>`)
 
-    $button.click(function () {
-        new AssetFilepaths().render(true);
+    $button.click(async function () {
+        assetWindow ??= new AssetFilepaths();
+        windowRender ??= assetWindow.render({force: true});
+        try {
+            await windowRender;
+            assetWindow.bringToFront();
+        } finally {
+            windowRender = null;
+        }
     });
 
     let settings_sidebar = document.querySelector('#settings .settings');
-    if (settings_sidebar.length == 0) {
+    if (!settings_sidebar) {
         ui.notifications.error(game.i18n.localize("asset-auditor.sidebar-not-found"));
         return;
     }

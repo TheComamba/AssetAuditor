@@ -8,6 +8,8 @@ editing into one overview, making asset reorganizations easier to review.
 
 - **Resizable audit window:** fixed search and filter tools with a separately
   scrolling result list.
+- **Scan snapshot:** search and filter the last complete result without reading
+  the filesystem again. Refresh the index to include external changes.
 - **Visible scan progress:** directory, reference and repair-hint counters, followed
   by completion, empty-result or retry feedback.
 - **User Data and Core Data checks:** local references are compared with server
@@ -29,10 +31,18 @@ button is available to the GM and Assistant GM roles.
 
 ![Settings sidebar with the settings tab and Asset Filepaths button highlighted](img/settings-sidebar-v14.png)
 
-The window displays progress while the audit runs, then shows its result summary.
-Use **Recheck** to repeat the audit. Search, filter changes and Recheck rebuild the
-list from saved document data, so save any path drafts you want to keep first.
-Closing the window during a scan keeps it closed; reopening starts a fresh check.
+The first scan builds a complete result snapshot and displays its progress.
+Search and filter changes use that snapshot without rereading folders. Changes
+saved through the audit update the affected reference in the snapshot.
+
+Use **Refresh index** to rescan all documents and paths, including changes made
+elsewhere, newly added documents or files, and removed files. The snapshot lasts
+until the browser reloads and is retained when the audit window is closed and
+reopened. It is held in browser memory; no JSON file is written to the server.
+
+Search and filter changes redraw the results, so save any path drafts you want to
+keep first. Closing during a scan keeps the window closed and ignores late
+results; reopening retries an interrupted scan.
 
 ### Find the affected usage
 
@@ -41,6 +51,9 @@ its individual usages. Context labels distinguish similarly named objects across
 scenes and other parent documents. **Open original** opens the associated editor.
 
 ![Audit overview with a completed scan, search and replace tools, type filter and grouped item usages](img/audit-overview-v14.png)
+
+The overview screenshot labels the refresh control **Recheck**; the cached-index
+workflow labels the same control **Refresh index**.
 
 The overview combines the scan summary and filters with expandable usage groups.
 Each entry identifies its parent and provides controls for opening the original,
@@ -71,7 +84,7 @@ or expression in the path field and save manually.
 **Search** filters by document name, path or parent name. Submit a query using its
 button or Enter. **Replace all** applies the replacement to the current result set
 when a search term is provided. Back up the world before bulk changes. If a
-replacement stops partway through, use **Recheck** to review the saved results.
+replacement stops partway through, use **Refresh index** to review the saved results.
 
 Both input fields can be cleared with their clear button or Escape. Enter in the
 replacement field runs the replacement, just as its button does.
@@ -157,5 +170,6 @@ workflow, and include its motivation, approach and reproducible verification.
 
 ## License and attribution
 
-Asset Auditor was created by [The Comamba](https://github.com/TheComamba/AssetAuditor).
+Asset Auditor was created by [The Comamba](https://github.com/TheComamba/AssetAuditor)
+and expanded by [vertigoogle](https://github.com/vertigoogle).
 The project is distributed under the [MIT license](LICENSE).

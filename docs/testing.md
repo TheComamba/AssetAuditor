@@ -12,7 +12,8 @@ npm run check
 
 The Node test runner discovers `tests/*.test.mjs`. Tests exercise aggregation,
 path comparison, document targeting, row saves, navigation, grouped usages,
-wildcards and scan lifecycle behavior. The DOM fixture compiles the real
+wildcards and scan lifecycle behavior. The snapshot tests cover cached filtering,
+explicit rebuilding, edited entries and coordination with active scans and saves. The DOM fixture compiles the real
 Handlebars template and simulates Foundry documents, file storage and application
 rendering. Metadata tests verify registered language keys and interpolation
 parameters, matching versions, and referenced module files.
@@ -77,7 +78,7 @@ outcome and reproduction details for each check.
 - [ ] Open Asset Filepaths from the Settings sidebar. Verify the native window,
   resize behavior, light/dark theme, labels and keyboard navigation.
 - [ ] Resize from approximately 1100px to 680px. Check long names and paths,
-  responsive row layout, fixed tools and separately scrolling results.
+  responsive row layout, fixed tools and a visible scrollbar for the results.
 - [ ] Click the launcher twice during an initial render. Verify one audit window.
 - [ ] Observe a visible window while a slow scan is running, counters for each
   stage and a completion summary with entry and invalid-reference counts.
@@ -85,8 +86,24 @@ outcome and reproduction details for each check.
   references. Verify the explicit empty-result message.
 - [ ] Close during a slow scan. Verify the window stays closed. Reopen with a new
   query and verify that older results preserve the newer query's result set.
-- [ ] Exercise an unavailable index, then restore access and use Recheck. Verify
+- [ ] Exercise an unavailable index, then restore access and use Refresh index. Verify
   the failure state, retained results and successful retry.
+
+### Snapshot and explicit refresh
+
+- [ ] Finish a scan, then change search text, document type and invalid-only
+  filters. Results should change without starting another filesystem scan.
+- [ ] Repair a path in invalid-only results. Clear that filter and verify the
+  repaired usage reappears with its saved path and validity.
+- [ ] Change a reference through its native sheet, add a document or add/remove a
+  file outside the audit. The snapshot should retain its previous result until
+  **Refresh index** completes, then include the changes.
+- [ ] Close and reopen the audit after completion. Verify the snapshot is reused.
+  Reload the browser and verify that a new initial scan runs.
+- [ ] Request Refresh index during a delayed save. Verify that it waits for the
+  write and that the new snapshot contains the persisted result.
+- [ ] Make an explicit rebuild fail, then retry. Verify that the last successful
+  snapshot remains visible until a new complete scan replaces it.
 
 ### Paths, documents and editing
 
@@ -94,7 +111,7 @@ outcome and reproduction details for each check.
   Select an existing Core Data icon, then test a nonexistent icon filename.
 - [ ] On a case-sensitive server, compare the listed filename with a reference
   whose filename case differs, from both Windows and Linux browser profiles.
-- [ ] Check a filename containing spaces and an apostrophe using its URI-encoded
+- [ ] Check filenames containing spaces, apostrophes, ampersands, plus signs and Unicode characters using its URI-encoded
   reference and a cache-busting query. Verify the saved reference is retained.
 - [ ] Choose a file for an invalid Actor and PlaylistSound. Verify autosaving,
   fresh validation, immediate removal from invalid-only results and preservation
@@ -111,7 +128,7 @@ outcome and reproduction details for each check.
   Open a placeable from another scene while retaining the current canvas.
 - [ ] Open a picker, change filters, then select a file. Verify that the obsolete
   picker leaves the current rows and documents unchanged.
-- [ ] Request Recheck during a delayed write. Verify that the scan waits for the
+- [ ] Request Refresh index during a delayed write. Verify that the scan waits for the
   write. Also close during the write and check that its completion keeps the
   window closed.
 - [ ] Exercise a rejected write. Verify its error feedback and retryable row.
