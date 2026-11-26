@@ -42,14 +42,16 @@ test('a shell is visible during directory loading and content controls freeze wh
     assert.equal(status(app).querySelector('progress').hidden, true);
     assert.equal(app.element.querySelector('.recheck-assets-button').disabled, false);
 });
-test('document validation remains busy while a wildcard expansion is pending', async () => {
-    actor('pattern', 'tokens/*.webp');let release;
-    env.listings.set('data|tokens/*.webp|wildcard', () => new Promise(resolve => {release = resolve;}));
-    const app = appForActors();await app.render();await waitFor(() => release);
+test('document validation remains busy while wildcard expansions are pending', async () => {
+    actor('pattern', 'tokens/*.webp');const releases = [];
+    env.listings.set('data|tokens/*.webp|wildcard', () => new Promise(resolve => {releases.push(resolve);}));
+    const app = appForActors();await app.render();await waitFor(() => releases.length === 2);
     assert.equal(app._scanState.phase, 'documents');assert.match(message(app), /Checking asset references/);
-    release({files: ['tokens/a.webp']});await waitForAudit(app);
+    // The full snapshot contains both the portrait and its prototype usage.
+    releases.forEach(release => release({files: ['tokens/a.webp']}));await waitForAudit(app);
     assert.equal(app._scanState.phase, 'complete');
 });
+
 test('completion waits for valid-parent-directory hints', async () => {
     actor();let calls = 0;let release;
     env.listings.set('data|images|directory', () => ++calls === 1 ? {files: []} : new Promise(resolve => {release = resolve;}));
@@ -67,11 +69,11 @@ test('a failed recheck retains the prior result set and enables retry', async t 
     actor();const app = await renderAudit(appForActors());const previous = app._assets;
     t.mock.method(console, 'error', () => {});
     const fault = t.mock.method(game.collections, 'get', () => {throw Error('Index unavailable');});
-    await app.refresh($(app.element));await waitForAudit(app);
-    assert.equal(app._assets, previous);assert.equal(status(app).dataset.state, 'error');
+    await app.refresh($(app.element), {rebuild: true});await waitForAudit(app);
+    assert.deepEqual(app._assets, previous);assert.equal(status(app).dataset.state, 'error');
     assert.equal(app.element.querySelectorAll('.asset-row, .path-input').length > 0, true);
     assert.equal(app.element.querySelector('.recheck-assets-button').disabled, false);
-    fault.mock.restore();await app.refresh($(app.element));await waitForAudit(app);
+    fault.mock.restore();await app.refresh($(app.element), {rebuild: true});await waitForAudit(app);
     assert.equal(status(app).dataset.state, 'complete');
 });
 test('a first-scan failure is distinct from an empty successful result', async t => {
@@ -124,8 +126,8 @@ test('successful row-update events refresh completion and empty-result feedback 
     assert.match(message(app), /0 entries.*0 invalid/);
     assert.equal(app.element.querySelector('.asset-auditor-scan-empty').hidden, false);
 });
-test('a deferred refresh after closing remains queued for the next opening', async () => {
+test('a deferred view refresh after closing remains queued without another scan', async () => {
     actor();const app = await renderAudit(appForActors());await app.close();
     app.refresh($(app.element));assert.equal(app.rendered, false);assert.equal(app.element.isConnected, false);
-    assert.equal(app._scanRequested, true);
+    assert.equal(app._refreshRequested, true);assert.equal(app._scanRequested, false);
 });

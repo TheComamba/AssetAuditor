@@ -35,8 +35,10 @@ globalThis.FilePicker = {async browse() { return {files: []}; }};
 globalThis.navigator ??= {};
 const {openAssetOriginal} = await import("../src/apps/asset-original.js");
 const {AssetFilepaths} = await import("../src/apps/asset-filepaths.js");
+const {auditIndex} = await import("../src/scripts/asset-index.js");
 beforeEach(() => {
     opened = [];notifications = [];
+    auditIndex.groups = null;
     const actors = [];
     globalThis.game = {actors, collections: new Map([["Actor", actors]]), i18n: {localize: key => key, format: key => key}};
     globalThis.ui = {notifications: {error: message => notifications.push(message)}};

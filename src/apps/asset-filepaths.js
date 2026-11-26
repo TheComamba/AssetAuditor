@@ -1,7 +1,8 @@
+import { auditIndex, filterAssetGroups } from "../scripts/asset-index.js";
 
 import { groupAssetRows } from "./asset-groups.js";
 import { updateWildcardFeedback } from "./asset-wildcards.js";
-import { getAllAssets, getAllAssetTypes, getAssetPath, getLastValidPath, setAssetPath, checkAssetPath, getIcon, isWildcardPath } from "../scripts/asset-aggregation.js";
+import { getAllAssets, getAllAssetTypes, getAssetPath, getLastValidPath, setAssetPath, checkAssetPath, getIcon, isWildcardPath, wildcardMatchCount } from "../scripts/asset-aggregation.js";
 
 const scanLabels = {
     idle: "asset-auditor.app.scan-idle",
@@ -31,11 +32,11 @@ class AssetFilepaths extends HandlebarsApplicationMixin(ApplicationV2) {
         super(options);
         this.context = {};
         this._assets = [];
-        this._scanRequested = true;
+        this._scanRequested = auditIndex.groups === null;
         this._scanBusy = false;
         this._loading = false;
         this._scanSequence = 0;
-        this._scanState = {phase: "idle", completed: 0, total: 0};
+        this._scanState = {phase: auditIndex.groups === null ? "idle" : "complete", completed: 0, total: 0};
         this._savingAssets = new Set();
         this._refreshRequested = false;
         this.showInvalidOnly = false;
@@ -54,7 +55,9 @@ class AssetFilepaths extends HandlebarsApplicationMixin(ApplicationV2) {
         this.context.replaceText = this.replaceText;
         this.context.assetTypes = getAllAssetTypes();
         this.context.singularType = this.singularType;
+        this._assets = filterAssetGroups(auditIndex.groups, this.showInvalidOnly, this.searchText, this.singularType);
         this.context.assets = this._assets;
+        this._refreshRequested = false;
         this.context.scanMessage = this.scanMessage();
         this.context.scanEmpty = this._scanState.phase === "complete" && !this._assets.some(group => group.assets.length);
         return this.context;
@@ -107,20 +110,20 @@ class AssetFilepaths extends HandlebarsApplicationMixin(ApplicationV2) {
     async scanAssets() {
         if (this._scanBusy || this._savingAssets?.size) return;
         const sequence = ++this._scanSequence;
-        const {showInvalidOnly, searchText, singularType} = this;
         this._scanRequested = false;
         this._scanBusy = true;
         this._loading = true;
         this._scanState = {phase: "starting", completed: 0, total: 0};
         this.updateScanUI();
         try {
-            const assets = await getAllAssets(showInvalidOnly, searchText, singularType, progress => {
+            const assets = await getAllAssets(false, '', '', progress => {
                 if (sequence !== this._scanSequence || !this._scanBusy) return;
                 this._scanState = progress;
                 this.updateScanUI();
             });
             if (sequence !== this._scanSequence) return;
-            this._assets = assets;
+            auditIndex.groups = assets;
+            this._assets = filterAssetGroups(assets, this.showInvalidOnly, this.searchText, this.singularType);
             this._scanState = {phase: "complete", completed: 0, total: 0};
         } catch (error) {
             if (sequence !== this._scanSequence) return;
@@ -138,7 +141,7 @@ class AssetFilepaths extends HandlebarsApplicationMixin(ApplicationV2) {
 
     activateListeners(html) {
 
-        html.find('.recheck-assets-button').click(() => this.refresh(html));
+        html.find('.recheck-assets-button').click(() => this.refresh(html, {rebuild: true}));
         html.off('asset-auditor:path-saved.scan').on('asset-auditor:path-saved.scan', () => this.updateScanUI());
         html.off('asset-auditor:path-saved.wildcards').on('asset-auditor:path-saved.wildcards', (_event, entry, row) => {
             void updateWildcardFeedback(entry, row).catch(error =>
@@ -297,11 +300,12 @@ class AssetFilepaths extends HandlebarsApplicationMixin(ApplicationV2) {
 
     async close(options = {}) {
         this._pathGroupObserver?.disconnect();
+        const rebuildPending = this._scanRequested || this._scanBusy;
         this._scanSequence++;
         this._scanBusy = false;
         this._loading = false;
-        this._scanRequested = true;
-        this._scanState = {phase: "idle", completed: 0, total: 0};
+        this._scanRequested = rebuildPending || auditIndex.groups === null;
+        this._scanState = {phase: auditIndex.groups === null ? "idle" : "complete", completed: 0, total: 0};
         return super.close(options);
     }
 
@@ -326,15 +330,14 @@ class AssetFilepaths extends HandlebarsApplicationMixin(ApplicationV2) {
     async performReplacement(html) {
         if (!this.currentSearchInput.trim() || this._loading || this._savingAssets.size) return;
         this.searchText = this.currentSearchInput;
-        const assets = this.context.assets.flatMap(assetMap => assetMap.assets.map(asset => asset.asset));
+        const entries = this.context.assets.flatMap(group => group.assets);
         this._savingAssets.add("batch");
         html.find('button, input, select').prop('disabled', true);
         try {
-            for (const asset of assets) {
-                const currentPath = getAssetPath(asset);
-                if (currentPath.includes(this.searchText)) {
-                    await setAssetPath(asset, currentPath.replace(this.searchText, this.replaceText));
-                }
+            for (const entry of entries) {
+                if (!entry.path.includes(this.searchText)) continue;
+                await this.updateAssetPath(entry.id, entry.path.replace(this.searchText, this.replaceText));
+                await this.revalidateEntry(entry);
             }
         } catch (error) {
             console.error("Asset Auditor | Replacement stopped", error);
@@ -350,10 +353,22 @@ class AssetFilepaths extends HandlebarsApplicationMixin(ApplicationV2) {
         this.refresh(html);
     }
 
-    refresh(html) {
-        this._scanRequested = true;
-        if (this._scanBusy || this._savingAssets?.size || !this.rendered) return;
+    refresh(html, {rebuild = false} = {}) {
+        if (rebuild || (auditIndex.groups === null && !this._scanBusy)) this._scanRequested = true;
+        this._refreshRequested = true;
+        if (this._scanBusy || this._savingAssets.size || !this.rendered) return;
+        this._refreshRequested = false;
         return this.render({force: true});
+    }
+
+    async revalidateEntry(entry) {
+        const path = getAssetPath(entry.asset);
+        const isWildcard = isWildcardPath(path);
+        const wildcardCount = isWildcard ? await wildcardMatchCount(path) : null;
+        const isValid = isWildcard ? wildcardCount > 0 : await checkAssetPath(path);
+        const lastValidPath = isValid ? '' : await getLastValidPath(path);
+        Object.assign(entry, {path, isWildcard, wildcardCount, isValid, lastValidPath,
+            icon: getIcon(entry.asset, isValid)});
     }
 
     updateOperability(html) {
@@ -393,10 +408,8 @@ class AssetFilepaths extends HandlebarsApplicationMixin(ApplicationV2) {
             const entry = this.findAsset(assetId);
             if (!entry) return;
             await this.updateAssetPath(assetId, input.val());
-            const savedPath = getAssetPath(entry.asset);
-            const isValid = await checkAssetPath(savedPath);
-            const lastValidPath = isValid ? '' : await getLastValidPath(savedPath);
-            Object.assign(entry, {path: savedPath, isValid, lastValidPath});
+            await this.revalidateEntry(entry);
+            const {path: savedPath, isValid, lastValidPath} = entry;
             input.val(savedPath).data('original-value', savedPath);
             row.next('.asset-invalid-hint').remove();
             if (this.showInvalidOnly && isValid) {
@@ -426,7 +439,7 @@ class AssetFilepaths extends HandlebarsApplicationMixin(ApplicationV2) {
             const dirty = input.val() !== input.data('original-value');
             updateButton.add(updateButton.siblings('.reset-button'))
                 .prop('disabled', !dirty).css('opacity', dirty ? 1 : 0);
-            if (!this._savingAssets.size && this._scanRequested) this.refresh(html);
+            if (!this._savingAssets.size && (this._scanRequested || this._refreshRequested)) this.refresh(html);
         }
     }
 

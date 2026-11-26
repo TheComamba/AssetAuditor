@@ -79,7 +79,9 @@ class FilePicker {
 export function listing(source, target, files, wildcard = false) {
     env.listings.set(`${source}|${target}|${wildcard ? "wildcard" : "directory"}`, files);
 }
+let resetIndex = () => {};
 export function reset() {
+    resetIndex();
     const dom = new JSDOM("<!doctype html><html><head></head><body></body></html>");
     globalThis.window = dom.window;
     globalThis.document = dom.window.document;
@@ -122,3 +124,6 @@ export async function renderAudit(app, options) {
     await app.render(options);
     return waitForAudit(app);
 }
+
+const {auditIndex} = await import("../../src/scripts/asset-index.js");
+resetIndex = () => { auditIndex.groups = null; };
