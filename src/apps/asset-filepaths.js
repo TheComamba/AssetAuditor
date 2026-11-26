@@ -1,8 +1,17 @@
-import { auditIndex } from "../scripts/asset-index.js";
+import { auditIndex, filterAssetGroups } from "../scripts/asset-index.js";
 
 import { groupAssetRows } from "./asset-groups.js";
 import { updateWildcardFeedback } from "./asset-wildcards.js";
-import { getAllAssetTypes, getAssetPath, getLastValidPath, checkAssetPath, getIcon, isWildcardPath } from "../scripts/asset-aggregation.js";
+import { getAllAssets, getAllAssetTypes, getAssetPath, getLastValidPath, setAssetPath, checkAssetPath, getIcon, isWildcardPath, wildcardMatchCount } from "../scripts/asset-aggregation.js";
+
+const scanLabels = {
+    idle: "asset-auditor.app.scan-idle",
+    starting: "asset-auditor.app.scan-starting",
+    directories: "asset-auditor.app.scan-directories",
+    documents: "asset-auditor.app.scan-documents",
+    hints: "asset-auditor.app.scan-hints",
+    error: "asset-auditor.app.scan-error"
+};
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
@@ -22,10 +31,14 @@ class AssetFilepaths extends HandlebarsApplicationMixin(ApplicationV2) {
     constructor(options = {}) {
         super(options);
         this.context = {};
-        this._index = auditIndex;
+        this._assets = [];
+        this._scanRequested = auditIndex.groups === null;
+        this._scanBusy = false;
+        this._loading = false;
+        this._scanSequence = 0;
+        this._scanState = {phase: auditIndex.groups === null ? "idle" : "complete", completed: 0, total: 0};
         this._savingAssets = new Set();
         this._refreshRequested = false;
-        this._loading = false;
         this.showInvalidOnly = false;
         this.currentSearchInput = '';
         this.searchText = '';
@@ -42,12 +55,11 @@ class AssetFilepaths extends HandlebarsApplicationMixin(ApplicationV2) {
         this.context.replaceText = this.replaceText;
         this.context.assetTypes = getAllAssetTypes();
         this.context.singularType = this.singularType;
-        this._loading = true;
-        try {
-            this.context.assets = await this._index.query(this.showInvalidOnly, this.searchText, this.singularType);
-        } finally {
-            this._loading = false;
-        }
+        this._assets = filterAssetGroups(auditIndex.groups, this.showInvalidOnly, this.searchText, this.singularType);
+        this.context.assets = this._assets;
+        this._refreshRequested = false;
+        this.context.scanMessage = this.scanMessage();
+        this.context.scanEmpty = this._scanState.phase === "complete" && !this._assets.some(group => group.assets.length);
         return this.context;
     }
 
@@ -56,7 +68,81 @@ class AssetFilepaths extends HandlebarsApplicationMixin(ApplicationV2) {
         this.activateListeners($(this.element));
     }
 
+    scanMessage() {
+        const {phase, completed, total} = this._scanState;
+        if (phase === "complete") {
+            const entries = this._assets.flatMap(group => group.assets);
+            return game.i18n.format("asset-auditor.app.scan-complete", {
+                count: entries.length, invalid: entries.filter(entry => !entry.isValid).length
+            });
+        }
+        if (["directories", "documents", "hints"].includes(phase)) {
+            return game.i18n.format(scanLabels[phase], {completed, total});
+        }
+        return game.i18n.localize(scanLabels[phase] ?? scanLabels.idle);
+    }
+
+    updateScanUI() {
+        const root = this.element?.[0] ?? this.element;
+        const status = root?.querySelector?.('.asset-scan-status');
+        if (!status) return;
+        const wasBusy = status.getAttribute('aria-busy') === 'true';
+        const {phase, completed, total} = this._scanState;
+        status.dataset.state = phase;
+        status.setAttribute('aria-busy', String(this._scanBusy));
+        status.querySelector('.asset-scan-message').textContent = this.scanMessage();
+        const progress = status.querySelector('progress');
+        progress.hidden = !this._scanBusy;
+        if (total > 0) { progress.max = total;progress.value = completed; }
+        else progress.removeAttribute('value');
+        status.querySelector('i').className = this._scanBusy ? 'fas fa-spinner fa-spin'
+            : phase === 'error' ? 'fas fa-triangle-exclamation' : 'fas fa-circle-check';
+        const empty = root.querySelector('.asset-auditor-scan-empty');
+        if (empty) empty.hidden = phase !== 'complete' || this._assets.some(group => group.assets.length);
+        // Freeze controls once per scan, leaving the window frame usable.
+        // The final render restores each control's individual enabled state.
+        if (this._scanBusy && !wasBusy) {
+            const content = root.querySelector('.asset-auditor-body, form') ?? root;
+            content.querySelectorAll('button, input, select').forEach(control => {control.disabled = true;});
+        }
+    }
+
+    async scanAssets() {
+        if (this._scanBusy || this._savingAssets?.size) return;
+        const sequence = ++this._scanSequence;
+        this._scanRequested = false;
+        this._scanBusy = true;
+        this._loading = true;
+        this._scanState = {phase: "starting", completed: 0, total: 0};
+        this.updateScanUI();
+        try {
+            const assets = await getAllAssets(false, '', '', progress => {
+                if (sequence !== this._scanSequence || !this._scanBusy) return;
+                this._scanState = progress;
+                this.updateScanUI();
+            });
+            if (sequence !== this._scanSequence) return;
+            auditIndex.groups = assets;
+            this._assets = filterAssetGroups(assets, this.showInvalidOnly, this.searchText, this.singularType);
+            this._scanState = {phase: "complete", completed: 0, total: 0};
+        } catch (error) {
+            if (sequence !== this._scanSequence) return;
+            console.error("Asset Auditor | Asset scan failed", error);
+            this._scanState = {phase: "error", completed: 0, total: 0};
+        } finally {
+            if (sequence === this._scanSequence) {
+                this._scanBusy = false;
+                this._loading = false;
+                this.updateScanUI();
+                if (this.rendered) await this.render();
+            }
+        }
+    }
+
     activateListeners(html) {
+
+        html.find('.recheck-assets-button').click(() => this.refresh(html, {rebuild: true}));
+        html.off('asset-auditor:path-saved.scan').on('asset-auditor:path-saved.scan', () => this.updateScanUI());
         html.off('asset-auditor:path-saved.wildcards').on('asset-auditor:path-saved.wildcards', (_event, entry, row) => {
             void updateWildcardFeedback(entry, row).catch(error =>
                 console.error("Asset Auditor | Could not refresh wildcard feedback", error));
@@ -83,20 +169,6 @@ class AssetFilepaths extends HandlebarsApplicationMixin(ApplicationV2) {
                 button.disabled = false;
             }
         });
-
-        html.find('.rebuild-index-button').click(async () => {
-            const controls = html.find('button, input, select');
-            controls.prop('disabled', true);
-            try {
-                await this._index.rebuild();
-            } catch (error) {
-                console.error("Asset Auditor | Could not refresh index", error);
-                ui.notifications.error(game.i18n.localize("asset-auditor.app.index-refresh-error"));
-            } finally {
-                this.refresh(html);
-            }
-        });
-
 
         html.find('#toggle-invalid').change(async (event) => {
             this.showInvalidOnly = event.target.checked;
@@ -219,12 +291,24 @@ class AssetFilepaths extends HandlebarsApplicationMixin(ApplicationV2) {
             });
 
         this.updateOperability(html);
+        this.updateScanUI();
+        if (this._scanRequested && !this._scanBusy && !this._savingAssets?.size) {
+            this._scanPromise = this.scanAssets();
+            void this._scanPromise.catch(error => console.error("Asset Auditor | Could not render scan results", error));
+        }
     }
 
     async close(options = {}) {
         this._pathGroupObserver?.disconnect();
+        const rebuildPending = this._scanRequested || this._scanBusy;
+        this._scanSequence++;
+        this._scanBusy = false;
+        this._loading = false;
+        this._scanRequested = rebuildPending || auditIndex.groups === null;
+        this._scanState = {phase: auditIndex.groups === null ? "idle" : "complete", completed: 0, total: 0};
         return super.close(options);
     }
+
 
     performDeleteReplace(event, html) {
         const button = $(event.currentTarget);
@@ -251,10 +335,9 @@ class AssetFilepaths extends HandlebarsApplicationMixin(ApplicationV2) {
         html.find('button, input, select').prop('disabled', true);
         try {
             for (const entry of entries) {
-                const currentPath = entry.path;
-                if (currentPath.includes(this.searchText)) {
-                    await this._index.save(entry, currentPath.replace(this.searchText, this.replaceText));
-                }
+                if (!entry.path.includes(this.searchText)) continue;
+                await this.updateAssetPath(entry.id, entry.path.replace(this.searchText, this.replaceText));
+                await this.revalidateEntry(entry);
             }
         } catch (error) {
             console.error("Asset Auditor | Replacement stopped", error);
@@ -270,13 +353,22 @@ class AssetFilepaths extends HandlebarsApplicationMixin(ApplicationV2) {
         this.refresh(html);
     }
 
-    refresh(html = $(this.element)) {
+    refresh(html, {rebuild = false} = {}) {
+        if (rebuild || (auditIndex.groups === null && !this._scanBusy)) this._scanRequested = true;
         this._refreshRequested = true;
-        if (this._savingAssets.size || this._loading) return;
+        if (this._scanBusy || this._savingAssets.size || !this.rendered) return;
         this._refreshRequested = false;
-        this._loading = true;
-        html.find('button, input, select').prop('disabled', true);
         return this.render({force: true});
+    }
+
+    async revalidateEntry(entry) {
+        const path = getAssetPath(entry.asset);
+        const isWildcard = isWildcardPath(path);
+        const wildcardCount = isWildcard ? await wildcardMatchCount(path) : null;
+        const isValid = isWildcard ? wildcardCount > 0 : await checkAssetPath(path);
+        const lastValidPath = isValid ? '' : await getLastValidPath(path);
+        Object.assign(entry, {path, isWildcard, wildcardCount, isValid, lastValidPath,
+            icon: getIcon(entry.asset, isValid)});
     }
 
     updateOperability(html) {
@@ -316,10 +408,8 @@ class AssetFilepaths extends HandlebarsApplicationMixin(ApplicationV2) {
             const entry = this.findAsset(assetId);
             if (!entry) return;
             await this.updateAssetPath(assetId, input.val());
-            const savedPath = getAssetPath(entry.asset);
-            const isValid = await checkAssetPath(savedPath);
-            const lastValidPath = isValid ? '' : await getLastValidPath(savedPath);
-            Object.assign(entry, {path: savedPath, isValid, lastValidPath});
+            await this.revalidateEntry(entry);
+            const {path: savedPath, isValid, lastValidPath} = entry;
             input.val(savedPath).data('original-value', savedPath);
             row.next('.asset-invalid-hint').remove();
             if (this.showInvalidOnly && isValid) {
@@ -349,7 +439,7 @@ class AssetFilepaths extends HandlebarsApplicationMixin(ApplicationV2) {
             const dirty = input.val() !== input.data('original-value');
             updateButton.add(updateButton.siblings('.reset-button'))
                 .prop('disabled', !dirty).css('opacity', dirty ? 1 : 0);
-            if (!this._savingAssets.size && this._refreshRequested) this.refresh(html);
+            if (!this._savingAssets.size && (this._scanRequested || this._refreshRequested)) this.refresh(html);
         }
     }
 
@@ -369,7 +459,7 @@ class AssetFilepaths extends HandlebarsApplicationMixin(ApplicationV2) {
             ui.notifications.error(game.i18n.format("asset-auditor.app.asset-not-found", { id: assetId }));
             return;
         }
-        await this._index.save(asset, inputValue);
+        asset.asset = await setAssetPath(asset.asset, inputValue);
     };
 }
 

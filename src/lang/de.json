@@ -17,7 +17,6 @@
     "asset-auditor.app.context-Actor": "Akteur",
     "asset-auditor.app.context-Playlist": "Playlist",
     "asset-auditor.app.context-JournalEntry": "Journal",
-    "asset-auditor.app.search-placeholder": "Name, Szene oder Dateipfad",
     "asset-auditor.app.last-valid-path": "Letzter valider Pfad:",
     "asset-auditor.app.delete-search-button": "Lösche Eingabe im Suchfeld",
     "asset-auditor.app.search-search-button": "Durchsuche Assets",
@@ -35,7 +34,16 @@
     "asset-auditor.settings.run-on-startup-hint": "Dies führt das Asset Audit beim Start durch und zeigt eine Fehlermeldung, falls ungültige Dateipfade gefunden werden.",
     "asset-auditor.sidebar-not-found": "Der Spieleinstellungen Abschnitt konnte nicht im HTML gefunden werden. Der Assets Button kann nicht angezeigt werden.",
     "asset-auditor.app.save-error": "Der Dateipfad konnte nicht vollständig gespeichert und geprüft werden. Bitte neu prüfen; Details stehen in der Browser-Konsole.",
-    "asset-auditor.app.refresh-index": "Index aktualisieren",
-    "asset-auditor.app.refresh-index-hint": "Alle Dokumente und Dateipfade erneut prüfen. Suche und Filter verwenden den gespeicherten Index.",
-    "asset-auditor.app.index-refresh-error": "Der Asset-Index konnte nicht aktualisiert werden. Die bisherigen Ergebnisse bleiben verfügbar."
+    "asset-auditor.app.recheck": "Index aktualisieren",
+    "asset-auditor.app.recheck-hint": "Alle Dokumente und Dateien erneut prüfen. Suche und Filter verwenden den letzten Scan.",
+    "asset-auditor.app.scan-idle": "Prüfung wird vorbereitet …",
+    "asset-auditor.app.scan-starting": "Dateiverweise werden erfasst …",
+    "asset-auditor.app.scan-directories": "Verzeichnisse einlesen: {completed} / {total}",
+    "asset-auditor.app.scan-documents": "Dateiverweise prüfen: {completed} / {total}",
+    "asset-auditor.app.scan-hints": "Fehlerhinweise ermitteln: {completed} / {total}",
+    "asset-auditor.app.scan-complete": "Prüfung abgeschlossen · {count} Einträge im Ergebnis · {invalid} ungültig",
+    "asset-auditor.app.scan-error": "Prüfung fehlgeschlagen. Die bisherigen Ergebnisse bleiben erhalten. Bitte erneut prüfen.",
+    "asset-auditor.app.scan-progress": "Fortschritt des aktuellen Prüfschritts",
+    "asset-auditor.app.scan-empty": "Keine Einträge für die gewählten Filter gefunden.",
+    "asset-auditor.app.index-hint": "Die Ergebnisse enthalten den letzten Scan und hier gespeicherte Änderungen. Andere Änderungen werden nach „Index aktualisieren“ sichtbar."
 }

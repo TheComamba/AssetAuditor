@@ -1,6 +1,6 @@
 import {test, beforeEach} from "node:test";
 import assert from "node:assert/strict";
-import {reset, actor, listing, env, waitFor, AssetFilepaths} from "./helpers/foundry.mjs";
+import {reset, actor, listing, env, waitFor, waitForAudit, AssetFilepaths} from "./helpers/foundry.mjs";
 beforeEach(reset);
 
 async function openAudit({invalidOnly = true} = {}) {
@@ -8,6 +8,7 @@ async function openAudit({invalidOnly = true} = {}) {
     app.showInvalidOnly = invalidOnly;
     app.singularType = "Actor";
     await app.render();
+    await waitForAudit(app);
 
     return app;
 }

@@ -1,112 +1,72 @@
-import {test, beforeEach} from "node:test";
-import assert from "node:assert/strict";
+import {test, beforeEach} from 'node:test';
+import assert from 'node:assert/strict';
+import {reset, actor, listing, env, waitFor, waitForAudit, renderAudit, AssetFilepaths} from './helpers/foundry.mjs';
+import {auditIndex} from '../src/scripts/asset-index.js';
+beforeEach(reset);
+const entries = app => app._assets.flatMap(group => group.assets);
+const rowFor = (app, subject) => [...app.element.querySelectorAll('.asset-row')]
+    .find(row => row.querySelector('.update-button').dataset.assetId === subject.uuid);
+async function open() {
+    const app = new AssetFilepaths();app.singularType = 'Actor';return renderAudit(app);
+}
+async function view(app, options) {await app.refresh($(app.element), options);await waitForAudit(app);}
 
-class Document {
-    constructor(data, parent = null) { Object.assign(this, data); this.parent = parent; }
-    get id() { return this._id; }
-    get uuid() { return `${this.parent ? this.parent.uuid + "." : ""}${this.constructor.name}.${this.id}`; }
-    async update(patch) {
-        for (const [key, value] of Object.entries(patch)) {
-            const parts = key.split('.'); const last = parts.pop();
-            let target = this; for (const part of parts) target = target[part];
-            target[last] = value;
-        }
-        return this;
-    }
-}
-for (const name of ["Actor", "Item", "JournalEntryPage", "PlaylistSound", "Scene", "AmbientSoundDocument", "TileDocument", "TokenDocument", "User"]) {
-    globalThis[name] = class extends Document {};
-    Object.defineProperty(globalThis[name], "name", {value: name});
-}
-class PrototypeToken { constructor(data) { Object.assign(this, data); } }
-globalThis.foundry = {data: {PrototypeToken}};
-globalThis.navigator ??= {};
-globalThis.Application = class {async getData() {return {};} activateListeners() {}};
-class ApplicationV2 {async _prepareContext() {return {};} _onRender() {}}
-globalThis.foundry.applications = {api: {ApplicationV2, HandlebarsApplicationMixin: Base => class extends Base {}}};
-let calls, files;
-globalThis.FilePicker = {async browse(source, target) {
-    calls.push({source, target});
-    if (target === 'images') return {files: [...files]};
-    throw new Error('Unavailable directory');
-}};
-const {AssetIndex} = await import('../src/scripts/asset-index.js');
-const {AssetFilepaths} = await import('../src/apps/asset-filepaths.js');
-beforeEach(() => {
-    const collections = new Map(["Actor", "JournalEntry", "Playlist", "Scene", "User"].map(name => [name, []]));
-    globalThis.game = {collections, actors: collections.get('Actor'), i18n: {localize: key => key}};
-    calls = []; files = ['images/valid.webp'];
+test('search and type/validity filters reuse the complete scan with no file queries', async t => {
+    actor('one');actor('two', 'images/valid.webp');listing('data', 'images', ['images/valid.webp']);
+    const browse = t.mock.method(FilePicker, 'browse');const app = await open();const reads = browse.mock.calls.length;
+    const sequence = app._scanSequence;app.searchText = 'two';await view(app);assert.equal(entries(app).length, 1);
+    app.searchText = '';app.showInvalidOnly = true;await view(app);assert.equal(entries(app).length, 1);
+    app.showInvalidOnly = false;app.singularType = 'PrototypeToken';await view(app);assert.equal(entries(app).length, 2);
+    assert.equal(browse.mock.calls.length, reads);assert.equal(app._scanSequence, sequence);
 });
-function actor(id, img = 'images/old.webp') {
-    const subject = new Actor({_id: id, name: id, img, items: []});
-    subject.prototypeToken = new PrototypeToken({name: id, texture: {src: img}});
-    game.actors.push(subject); return subject;
-}
-const entries = groups => groups.flatMap(group => group.assets);
-const actors = index => index.query(false, '', 'Actor').then(entries);
-
-test('search and type/validity filters reuse the complete snapshot without more file queries', async () => {
-    actor('one'); actor('two', 'images/valid.webp'); const index = new AssetIndex();
-    await index.query(true, 'one', 'Actor'); const count = calls.length;
-    assert.equal((await actors(index)).length, 2);
-    assert.equal(entries(await index.query(true, '', 'Actor')).length, 1);
-    assert.equal(entries(await index.query(false, 'two', 'Actor')).length, 1);
-    assert(entries(await index.query(false, '', 'PrototypeToken')).length > 0);
-    assert.equal(calls.length, count);
+test('a repaired entry remains in the snapshot when removed from invalid-only results', async t => {
+    const subject = actor('one');const app = await open();app.showInvalidOnly = true;await view(app);
+    listing('data', 'images', ['images/valid.webp']);const browse = t.mock.method(FilePicker, 'browse');const sequence = app._scanSequence;
+    const row = rowFor(app, subject);row.querySelector('.path-input').value = 'images/valid.webp';
+    await app.saveAssetRow($(row.querySelector('.update-button')), $(app.element));assert.equal(entries(app).length, 0);
+    assert.equal(browse.mock.calls.length, 2);const reads = browse.mock.calls.length;
+    app.showInvalidOnly = false;await view(app);assert.equal(entries(app)[0].path, 'images/valid.webp');
+    assert.equal(browse.mock.calls.length, reads);assert.equal(app._scanSequence, sequence);
 });
-test('filtering by parent name uses the indexed context', async () => {
-    const owner = actor('owner'); owner.items.push(new Item({_id: 'item', name: 'Sword', img: 'images/valid.webp'}, owner));
-    const index = new AssetIndex(); await index.query(); const count = calls.length;
-    assert.equal(entries(await index.query(false, 'owner', 'Item')).length, 1); assert.equal(calls.length, count);
+test('external document and filesystem changes appear only after Refresh index', async () => {
+    const subject = actor('one');const app = await open();actor('new');subject.img = 'images/valid.webp';listing('data', 'images', ['images/valid.webp']);
+    await view(app);assert.equal(entries(app).length, 1);assert.equal(entries(app)[0].path, 'images/old.webp');
+    await view(app, {rebuild: true});assert.equal(entries(app).length, 2);
+    assert.equal(entries(app).find(entry => entry.name === 'one').isValid, true);
 });
-test('a manual rebuild discovers new documents and externally changed paths', async () => {
-    const subject = actor('one'); const index = new AssetIndex(); await index.query();
-    actor('new'); subject.img = 'images/valid.webp'; assert.equal((await actors(index)).length, 1);
-    assert.equal((await actors(index))[0].path, 'images/old.webp');
-    await index.rebuild(); assert.equal((await actors(index)).length, 2);
-    assert.equal((await actors(index)).find(e => e.name === 'one').path, 'images/valid.webp');
+test('closing and reopening retains the snapshot without another scan', async t => {
+    actor('one');const app = await open();const browse = t.mock.method(FilePicker, 'browse');await app.close();await renderAudit(app);
+    assert.equal(entries(app).length, 1);assert.equal(browse.mock.calls.length, 0);
+    const other = new AssetFilepaths();other.singularType = 'Actor';await renderAudit(other);
+    assert.equal(entries(other).length, 1);assert.equal(browse.mock.calls.length, 0);
 });
-test('saving revalidates only the edited usage and retains it outside invalid-only results', async () => {
-    actor('one'); actor('other', 'elsewhere/old.webp'); const index = new AssetIndex();
-    const entry = (await actors(index)).find(e => e.name === 'one'); calls = [];
-    await index.save(entry, 'images/valid.webp'); assert.equal(entry.path, 'images/valid.webp'); assert.equal(entry.isValid, true);
-    assert.deepEqual(calls.map(c => c.target), ['images', 'images']);
-    assert(!entries(await index.query(true, '', 'Actor')).includes(entry)); assert((await actors(index)).includes(entry));
+test('failed explicit rebuild keeps the prior snapshot and offers a working retry', async t => {
+    actor('one');const app = await open();const previous = auditIndex.groups;t.mock.method(console, 'error', () => {});
+    const get = game.collections.get.bind(game.collections);game.collections.get = () => {throw new Error('unavailable');};
+    await view(app, {rebuild: true});assert.equal(auditIndex.groups, previous);assert.equal(app._scanState.phase, 'error');
+    game.collections.get = get;await view(app, {rebuild: true});assert.equal(app._scanState.phase, 'complete');
 });
-test('failed writes keep cached metadata unchanged', async () => {
-    const subject = actor('one'); const index = new AssetIndex(); const [entry] = await actors(index);
-    subject.update = async () => {throw new Error('write failed');};
-    await assert.rejects(index.save(entry, 'images/valid.webp'), /write failed/); assert.equal(entry.path, 'images/old.webp');
+test('bulk replacement updates cached metadata without rebuilding other usages', async t => {
+    const first = actor('one');actor('other', 'elsewhere/portrait.webp');const app = await open();
+    app.currentSearchInput = 'old';app.searchText = 'old';app.replaceText = 'valid';await view(app);
+    listing('data', 'images', ['images/valid.webp']);const browse = t.mock.method(FilePicker, 'browse');const sequence = app._scanSequence;
+    await app.performReplacement($(app.element));await waitFor(() => !app._loading);await view(app);
+    assert.equal(first.img, 'images/valid.webp');assert.equal(entries(app).length, 0);
+    app.searchText = '';await view(app);const entry = entries(app).find(entry => entry.name === 'one');assert.equal(entry.isValid, true);
+    assert.equal(entry.path, 'images/valid.webp');assert.equal(browse.mock.calls.length, 2);assert.equal(app._scanSequence, sequence);
 });
-test('failed rebuild retains the previous successful snapshot', async () => {
-    actor('one'); const index = new AssetIndex(); await index.query(); const groups = index._groups;
-    const get = game.collections.get.bind(game.collections); game.collections.get = () => {throw new Error('scan failed');};
-    await assert.rejects(index.rebuild(), /scan failed/); game.collections.get = get;
-    assert.equal(index._groups, groups); assert.equal((await actors(index)).length, 1);
+test('Refresh index waits for pending writes using the existing save lifecycle', async () => {
+    const subject = actor('one');const app = await open();listing('data', 'images', ['images/valid.webp']);
+    let release;const original = subject.update.bind(subject);subject.update = async patch => {await new Promise(resolve => {release = resolve;});return original(patch);};
+    const row = rowFor(app, subject);row.querySelector('.path-input').value = 'images/valid.webp';
+    const save = app.saveAssetRow($(row.querySelector('.update-button')), $(app.element));const sequence = app._scanSequence;
+    app.refresh($(app.element), {rebuild: true});assert.equal(app._scanSequence, sequence);release();await save;await waitForAudit(app);
+    assert(app._scanSequence > sequence);assert.equal(entries(app)[0].path, 'images/valid.webp');
 });
-test('simultaneous initial queries share one scan', async () => {
-    actor('one'); const index = new AssetIndex(); await Promise.all([actors(index), actors(index), index.query(true)]);
-    assert.equal(calls.filter(c => c.target === 'images' && c.source === 'data').length, 3);
-    // One initial listing, then one invalid-parent hint each for actor and prototype.
-});
-test('rebuilding waits for a pending save and publishes its persisted result', async () => {
-    const subject = actor('one'); const index = new AssetIndex(); const [entry] = await actors(index);
-    let release; const update = subject.update.bind(subject);
-    subject.update = async patch => {await new Promise(resolve => {release = resolve;}); return update(patch);};
-    const save = index.save(entry, 'images/valid.webp'); let rebuilt = false;
-    const rebuild = index.rebuild().then(() => {rebuilt = true;});
-    await new Promise(resolve => setTimeout(resolve, 0)); assert.equal(rebuilt, false);
-    release(); await Promise.all([save, rebuild]); assert.equal((await actors(index))[0].path, 'images/valid.webp');
-});
-test('prototype saves retain the refreshed model for subsequent cached edits', async () => {
-    const owner = actor('one'); const index = new AssetIndex();
-    const entry = entries(await index.query(false, '', 'PrototypeToken'))[0];
-    owner.update = async patch => {owner.prototypeToken = new PrototypeToken({name: 'one', texture: {src: patch['prototypeToken.texture.src']}}); return owner;};
-    await index.save(entry, 'images/valid.webp'); assert.equal(entry.asset, owner.prototypeToken);
-    await index.save(entry, 'images/old.webp'); assert.equal(entry.asset, owner.prototypeToken); assert.equal(entry.path, 'images/old.webp');
-});
-test('two audit windows share the index through the application context', async () => {
-    actor('one'); const one = new AssetFilepaths(), two = new AssetFilepaths();
-    const context = await one._prepareContext(); const count = calls.length; await two._prepareContext();
-    assert.equal(one._index, two._index); assert(entries(context.assets).length > 0); assert.equal(calls.length, count);
+test('search changes during initial scan use the latest filter without a second scan', async () => {
+    actor('one');actor('two');let release;env.listings.set('data|images|directory', () => new Promise(resolve => {release = resolve;}));
+    const app = new AssetFilepaths();app.singularType = 'Actor';await app.render();await waitFor(() => release);
+    const sequence = app._scanSequence;app.searchText = 'two';app.refresh($(app.element));
+    listing('data', 'images', []);release({files: []});await waitForAudit(app);
+    assert.equal(app._scanSequence, sequence);assert.equal(entries(app).length, 1);assert.equal(entries(app)[0].name, 'two');
 });

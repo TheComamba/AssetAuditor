@@ -17,7 +17,6 @@
     "asset-auditor.app.context-Actor": "Actor",
     "asset-auditor.app.context-Playlist": "Playlist",
     "asset-auditor.app.context-JournalEntry": "Journal",
-    "asset-auditor.app.search-placeholder": "Name, scene or file path",
     "asset-auditor.app.last-valid-path": "Last valid path:",
     "asset-auditor.app.delete-search-button": "Clear search field",
     "asset-auditor.app.search-search-button": "Search assets",
@@ -35,7 +34,16 @@
     "asset-auditor.settings.run-on-startup-hint": "This will run the asset audit on startup and display an error message if any invalid filepaths are found.",
     "asset-auditor.sidebar-not-found": "The game settings sidebar section could not be found in HTML. The assets button cannot be rendered.",
     "asset-auditor.app.save-error": "The asset path could not be fully saved and checked. Please recheck; see the browser console for details.",
-    "asset-auditor.app.refresh-index": "Refresh index",
-    "asset-auditor.app.refresh-index-hint": "Recheck all documents and file paths. Searches and filters use the cached index.",
-    "asset-auditor.app.index-refresh-error": "Could not refresh the asset index. The previous results are still available."
+    "asset-auditor.app.recheck": "Refresh index",
+    "asset-auditor.app.recheck-hint": "Recheck all documents and files. Search and filters reuse the last scan.",
+    "asset-auditor.app.scan-idle": "Preparing scan …",
+    "asset-auditor.app.scan-starting": "Collecting asset references …",
+    "asset-auditor.app.scan-directories": "Reading directories: {completed} / {total}",
+    "asset-auditor.app.scan-documents": "Checking asset references: {completed} / {total}",
+    "asset-auditor.app.scan-hints": "Locating valid parent directories: {completed} / {total}",
+    "asset-auditor.app.scan-complete": "Scan complete · {count} entries in results · {invalid} invalid",
+    "asset-auditor.app.scan-error": "Scan failed. Previous results have been retained. Please recheck.",
+    "asset-auditor.app.scan-progress": "Progress of the current scan stage",
+    "asset-auditor.app.scan-empty": "No entries match the selected filters.",
+    "asset-auditor.app.index-hint": "Results reflect the last scan and changes saved here. Refresh index to include other changes."
 }
