@@ -1,0 +1,33 @@
+name: Lint and format
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: ESLint and Prettier
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+          submodules: true
+      - uses: actions/setup-node@v7
+        with:
+          # The foundry_scripts tools require exactly the version pinned in .nvmrc.
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - name: Lint
+        run: ./foundry_scripts/lint.sh
+      - name: Check formatting
+        if: ${{ !cancelled() }}
+        run: ./foundry_scripts/format.sh --check

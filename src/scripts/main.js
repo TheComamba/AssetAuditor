@@ -38,13 +38,13 @@ Hooks.once("ready", async function () {
   }
 });
 
-Hooks.on("renderSidebar", async (app, html) => {
+Hooks.on("renderSidebar", async () => {
   if (!isUserPermitted()) {
     return;
   }
 
-  let button_text = game.i18n.localize("asset-auditor.asset-filepaths");
-  let $button = $(
+  const button_text = game.i18n.localize("asset-auditor.asset-filepaths");
+  const $button = $(
     `<button class='asset-list'><i class='fas fa-file-edit'></i> ${button_text}</button>`,
   );
 
@@ -59,7 +59,7 @@ Hooks.on("renderSidebar", async (app, html) => {
     }
   });
 
-  let settings_sidebar = document.querySelector("#settings .settings");
+  const settings_sidebar = document.querySelector("#settings .settings");
   if (!settings_sidebar) {
     ui.notifications.error(
       game.i18n.localize("asset-auditor.sidebar-not-found"),

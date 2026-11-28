@@ -18,7 +18,7 @@ function getAssets(collectionName, extractAssets) {
   return assets;
 }
 
-let assetTypes = [
+const assetTypes = [
   { type: Actor, startAsset: "Actor", closure: (actor) => [actor] },
   { type: Item, startAsset: "Actor", closure: (actor) => actor.items },
   {
@@ -52,7 +52,7 @@ let assetTypes = [
 ];
 
 function getAllAssetTypes() {
-  let types = assetTypes.map((assetType) => assetType.type.name);
+  const types = assetTypes.map((assetType) => assetType.type.name);
   types.sort((a, b) => a.localeCompare(b));
   return types;
 }
@@ -160,7 +160,7 @@ function getIcon(asset, isValid) {
   if (asset instanceof User) {
     return "fas fa-file-image";
   }
-  showAssetTypeError(type);
+  showAssetTypeError(asset.constructor.name);
   return "fas fa-times";
 }
 
@@ -200,15 +200,15 @@ async function initializeFileCache(assetDirs, onProgress) {
   const directories = assetDirs.filter((dir) => !isUrl(dir));
   let completed = 0;
   onProgress?.({ phase: "directories", completed, total: directories.length });
-  for (let dir of directories) {
-    if (!fileCache.hasOwnProperty(dir)) {
+  for (const dir of directories) {
+    if (!Object.hasOwn(fileCache, dir)) {
       try {
         const listings = await browseAssetSources(dir);
         const fileResult = {
           files: listings.flatMap((listing) => listing.files),
         };
         fileCache[dir] = fileResult.files;
-      } catch (error) {
+      } catch {
         fileCache[dir] = [];
       }
     }
@@ -268,7 +268,7 @@ async function isValidLocalPath(path, fileCache) {
   }
 
   const dirIndex = pathWithoutQuery.lastIndexOf("/");
-  let dir = dirIndex !== -1 ? pathWithoutQuery.substring(0, dirIndex) : "";
+  const dir = dirIndex !== -1 ? pathWithoutQuery.substring(0, dirIndex) : "";
   const files = fileCache[dir];
   return isFileContained(pathWithoutQuery, files);
 }
@@ -309,7 +309,7 @@ async function isValidHttpDomain(path) {
   try {
     await fetch(path, { method: "HEAD", mode: "no-cors" });
     isValid = true;
-  } catch (error) {
+  } catch {
     isValid = false;
   }
   domainCache[domain] = isValid;
@@ -366,8 +366,8 @@ async function getAllAssets(invalidOnly, searchText, singularType, onProgress) {
   );
   let completed = 0;
   onProgress?.({ phase: "documents", completed, total });
-  let assetPromises = pointerGroups.map(async (group) => {
-    let mappedAssetPromises = group.collection.map(async (asset) => {
+  const assetPromises = pointerGroups.map(async (group) => {
+    const mappedAssetPromises = group.collection.map(async (asset) => {
       const result = await assetPointerToObject(asset, fileCache);
       onProgress?.({ phase: "documents", completed: ++completed, total });
       return result;
@@ -399,7 +399,7 @@ async function getAllAssets(invalidOnly, searchText, singularType, onProgress) {
     };
   });
 
-  let assets = await Promise.all(assetPromises);
+  const assets = await Promise.all(assetPromises);
 
   await addLastValidPathsToInvalidAssets(assets, onProgress);
 
