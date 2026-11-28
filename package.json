@@ -19,7 +19,9 @@
   ],
   "scripts": {
     "test": "node --test tests/*.test.mjs",
-    "check": "node scripts/check-source.mjs"
+    "check": "node scripts/check-source.mjs",
+    "lint": "eslint .",
+    "format:check": "prettier --check ."
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
