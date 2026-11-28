@@ -156,10 +156,9 @@
   overflow-wrap: anywhere;
 }
 .asset-auditor .asset-row:has(.open-original-button) {
-  grid-template-columns: 18px 32px minmax(130px, 180px) minmax(
-      120px,
-      1fr
-    ) repeat(3, 32px);
+  grid-template-columns:
+    18px 32px minmax(130px, 180px) minmax(120px, 1fr)
+    repeat(3, 32px);
   grid-template-areas: "status original identity path reset browse save";
 }
 .asset-auditor .asset-status {
