@@ -38,7 +38,7 @@ Hooks.once("ready", async function () {
   }
 });
 
-Hooks.on("renderSidebar", async (app, html) => {
+Hooks.on("renderSidebar", async () => {
   if (!isUserPermitted()) {
     return;
   }

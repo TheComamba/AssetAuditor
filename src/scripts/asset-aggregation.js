@@ -160,7 +160,7 @@ function getIcon(asset, isValid) {
   if (asset instanceof User) {
     return "fas fa-file-image";
   }
-  showAssetTypeError(type);
+  showAssetTypeError(asset.constructor.name);
   return "fas fa-times";
 }
 
@@ -201,14 +201,14 @@ async function initializeFileCache(assetDirs, onProgress) {
   let completed = 0;
   onProgress?.({ phase: "directories", completed, total: directories.length });
   for (const dir of directories) {
-    if (!fileCache.hasOwnProperty(dir)) {
+    if (!Object.hasOwn(fileCache, dir)) {
       try {
         const listings = await browseAssetSources(dir);
         const fileResult = {
           files: listings.flatMap((listing) => listing.files),
         };
         fileCache[dir] = fileResult.files;
-      } catch (error) {
+      } catch {
         fileCache[dir] = [];
       }
     }
@@ -309,7 +309,7 @@ async function isValidHttpDomain(path) {
   try {
     await fetch(path, { method: "HEAD", mode: "no-cors" });
     isValid = true;
-  } catch (error) {
+  } catch {
     isValid = false;
   }
   domainCache[domain] = isValid;
