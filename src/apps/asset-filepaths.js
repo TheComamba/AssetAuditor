@@ -2,465 +2,586 @@ import { auditIndex, filterAssetGroups } from "../scripts/asset-index.js";
 
 import { groupAssetRows } from "./asset-groups.js";
 import { updateWildcardFeedback } from "./asset-wildcards.js";
-import { getAllAssets, getAllAssetTypes, getAssetPath, getLastValidPath, setAssetPath, checkAssetPath, getIcon, isWildcardPath, wildcardMatchCount } from "../scripts/asset-aggregation.js";
+import {
+  getAllAssets,
+  getAllAssetTypes,
+  getAssetPath,
+  getLastValidPath,
+  setAssetPath,
+  checkAssetPath,
+  getIcon,
+  isWildcardPath,
+  wildcardMatchCount,
+} from "../scripts/asset-aggregation.js";
 
 const scanLabels = {
-    idle: "asset-auditor.app.scan-idle",
-    starting: "asset-auditor.app.scan-starting",
-    directories: "asset-auditor.app.scan-directories",
-    documents: "asset-auditor.app.scan-documents",
-    hints: "asset-auditor.app.scan-hints",
-    error: "asset-auditor.app.scan-error"
+  idle: "asset-auditor.app.scan-idle",
+  starting: "asset-auditor.app.scan-starting",
+  directories: "asset-auditor.app.scan-directories",
+  documents: "asset-auditor.app.scan-documents",
+  hints: "asset-auditor.app.scan-hints",
+  error: "asset-auditor.app.scan-error",
 };
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
 class AssetFilepaths extends HandlebarsApplicationMixin(ApplicationV2) {
-    static DEFAULT_OPTIONS = {
-        id: "asset-auditor-filepaths",
-        classes: ["asset-auditor"],
-        tag: "div",
-        window: {title: "asset-auditor.asset-filepaths", icon: "fas fa-file-circle-check", resizable: true},
-        position: {width: 1100, height: 760}
-    };
+  static DEFAULT_OPTIONS = {
+    id: "asset-auditor-filepaths",
+    classes: ["asset-auditor"],
+    tag: "div",
+    window: {
+      title: "asset-auditor.asset-filepaths",
+      icon: "fas fa-file-circle-check",
+      resizable: true,
+    },
+    position: { width: 1100, height: 760 },
+  };
 
-    static PARTS = {
-        main: {template: "modules/asset-auditor/apps/asset-filepaths.hbs", scrollable: [".asset-results"]}
-    };
+  static PARTS = {
+    main: {
+      template: "modules/asset-auditor/apps/asset-filepaths.hbs",
+      scrollable: [".asset-results"],
+    },
+  };
 
-    constructor(options = {}) {
-        super(options);
-        this.context = {};
-        this._assets = [];
-        this._scanRequested = auditIndex.groups === null;
+  constructor(options = {}) {
+    super(options);
+    this.context = {};
+    this._assets = [];
+    this._scanRequested = auditIndex.groups === null;
+    this._scanBusy = false;
+    this._loading = false;
+    this._scanSequence = 0;
+    this._scanState = {
+      phase: auditIndex.groups === null ? "idle" : "complete",
+      completed: 0,
+      total: 0,
+    };
+    this._savingAssets = new Set();
+    this._refreshRequested = false;
+    this.showInvalidOnly = false;
+    this.currentSearchInput = "";
+    this.searchText = "";
+    this.replaceText = "";
+    this.singularType = "";
+  }
+
+  async _prepareContext(options = {}) {
+    this.context = await super._prepareContext(options);
+    this.context.title = game.i18n.localize("asset-auditor.asset-filepaths");
+    this.context.showInvalidOnly = this.showInvalidOnly;
+    this.context.currentSearchInput = this.currentSearchInput;
+    this.context.searchText = this.searchText;
+    this.context.replaceText = this.replaceText;
+    this.context.assetTypes = getAllAssetTypes();
+    this.context.singularType = this.singularType;
+    this._assets = filterAssetGroups(
+      auditIndex.groups,
+      this.showInvalidOnly,
+      this.searchText,
+      this.singularType,
+    );
+    this.context.assets = this._assets;
+    this._refreshRequested = false;
+    this.context.scanMessage = this.scanMessage();
+    this.context.scanEmpty =
+      this._scanState.phase === "complete" &&
+      !this._assets.some((group) => group.assets.length);
+    return this.context;
+  }
+
+  _onRender(context, options) {
+    super._onRender(context, options);
+    this.activateListeners($(this.element));
+  }
+
+  scanMessage() {
+    const { phase, completed, total } = this._scanState;
+    if (phase === "complete") {
+      const entries = this._assets.flatMap((group) => group.assets);
+      return game.i18n.format("asset-auditor.app.scan-complete", {
+        count: entries.length,
+        invalid: entries.filter((entry) => !entry.isValid).length,
+      });
+    }
+    if (["directories", "documents", "hints"].includes(phase)) {
+      return game.i18n.format(scanLabels[phase], { completed, total });
+    }
+    return game.i18n.localize(scanLabels[phase] ?? scanLabels.idle);
+  }
+
+  updateScanUI() {
+    const root = this.element?.[0] ?? this.element;
+    const status = root?.querySelector?.(".asset-scan-status");
+    if (!status) return;
+    const wasBusy = status.getAttribute("aria-busy") === "true";
+    const { phase, completed, total } = this._scanState;
+    status.dataset.state = phase;
+    status.setAttribute("aria-busy", String(this._scanBusy));
+    status.querySelector(".asset-scan-message").textContent =
+      this.scanMessage();
+    const progress = status.querySelector("progress");
+    progress.hidden = !this._scanBusy;
+    if (total > 0) {
+      progress.max = total;
+      progress.value = completed;
+    } else progress.removeAttribute("value");
+    status.querySelector("i").className = this._scanBusy
+      ? "fas fa-spinner fa-spin"
+      : phase === "error"
+        ? "fas fa-triangle-exclamation"
+        : "fas fa-circle-check";
+    const empty = root.querySelector(".asset-auditor-scan-empty");
+    if (empty)
+      empty.hidden =
+        phase !== "complete" ||
+        this._assets.some((group) => group.assets.length);
+    // Freeze controls once per scan, leaving the window frame usable.
+    // The final render restores each control's individual enabled state.
+    if (this._scanBusy && !wasBusy) {
+      const content = root.querySelector(".asset-auditor-body, form") ?? root;
+      content.querySelectorAll("button, input, select").forEach((control) => {
+        control.disabled = true;
+      });
+    }
+  }
+
+  async scanAssets() {
+    if (this._scanBusy || this._savingAssets?.size) return;
+    const sequence = ++this._scanSequence;
+    this._scanRequested = false;
+    this._scanBusy = true;
+    this._loading = true;
+    this._scanState = { phase: "starting", completed: 0, total: 0 };
+    this.updateScanUI();
+    try {
+      const assets = await getAllAssets(false, "", "", (progress) => {
+        if (sequence !== this._scanSequence || !this._scanBusy) return;
+        this._scanState = progress;
+        this.updateScanUI();
+      });
+      if (sequence !== this._scanSequence) return;
+      auditIndex.groups = assets;
+      this._assets = filterAssetGroups(
+        assets,
+        this.showInvalidOnly,
+        this.searchText,
+        this.singularType,
+      );
+      this._scanState = { phase: "complete", completed: 0, total: 0 };
+    } catch (error) {
+      if (sequence !== this._scanSequence) return;
+      console.error("Asset Auditor | Asset scan failed", error);
+      this._scanState = { phase: "error", completed: 0, total: 0 };
+    } finally {
+      if (sequence === this._scanSequence) {
         this._scanBusy = false;
         this._loading = false;
-        this._scanSequence = 0;
-        this._scanState = {phase: auditIndex.groups === null ? "idle" : "complete", completed: 0, total: 0};
-        this._savingAssets = new Set();
-        this._refreshRequested = false;
-        this.showInvalidOnly = false;
-        this.currentSearchInput = '';
-        this.searchText = '';
-        this.replaceText = '';
-        this.singularType = '';
-    }
-
-    async _prepareContext(options = {}) {
-        this.context = await super._prepareContext(options);
-        this.context.title = game.i18n.localize("asset-auditor.asset-filepaths");
-        this.context.showInvalidOnly = this.showInvalidOnly
-        this.context.currentSearchInput = this.currentSearchInput;
-        this.context.searchText = this.searchText;
-        this.context.replaceText = this.replaceText;
-        this.context.assetTypes = getAllAssetTypes();
-        this.context.singularType = this.singularType;
-        this._assets = filterAssetGroups(auditIndex.groups, this.showInvalidOnly, this.searchText, this.singularType);
-        this.context.assets = this._assets;
-        this._refreshRequested = false;
-        this.context.scanMessage = this.scanMessage();
-        this.context.scanEmpty = this._scanState.phase === "complete" && !this._assets.some(group => group.assets.length);
-        return this.context;
-    }
-
-    _onRender(context, options) {
-        super._onRender(context, options);
-        this.activateListeners($(this.element));
-    }
-
-    scanMessage() {
-        const {phase, completed, total} = this._scanState;
-        if (phase === "complete") {
-            const entries = this._assets.flatMap(group => group.assets);
-            return game.i18n.format("asset-auditor.app.scan-complete", {
-                count: entries.length, invalid: entries.filter(entry => !entry.isValid).length
-            });
-        }
-        if (["directories", "documents", "hints"].includes(phase)) {
-            return game.i18n.format(scanLabels[phase], {completed, total});
-        }
-        return game.i18n.localize(scanLabels[phase] ?? scanLabels.idle);
-    }
-
-    updateScanUI() {
-        const root = this.element?.[0] ?? this.element;
-        const status = root?.querySelector?.('.asset-scan-status');
-        if (!status) return;
-        const wasBusy = status.getAttribute('aria-busy') === 'true';
-        const {phase, completed, total} = this._scanState;
-        status.dataset.state = phase;
-        status.setAttribute('aria-busy', String(this._scanBusy));
-        status.querySelector('.asset-scan-message').textContent = this.scanMessage();
-        const progress = status.querySelector('progress');
-        progress.hidden = !this._scanBusy;
-        if (total > 0) { progress.max = total;progress.value = completed; }
-        else progress.removeAttribute('value');
-        status.querySelector('i').className = this._scanBusy ? 'fas fa-spinner fa-spin'
-            : phase === 'error' ? 'fas fa-triangle-exclamation' : 'fas fa-circle-check';
-        const empty = root.querySelector('.asset-auditor-scan-empty');
-        if (empty) empty.hidden = phase !== 'complete' || this._assets.some(group => group.assets.length);
-        // Freeze controls once per scan, leaving the window frame usable.
-        // The final render restores each control's individual enabled state.
-        if (this._scanBusy && !wasBusy) {
-            const content = root.querySelector('.asset-auditor-body, form') ?? root;
-            content.querySelectorAll('button, input, select').forEach(control => {control.disabled = true;});
-        }
-    }
-
-    async scanAssets() {
-        if (this._scanBusy || this._savingAssets?.size) return;
-        const sequence = ++this._scanSequence;
-        this._scanRequested = false;
-        this._scanBusy = true;
-        this._loading = true;
-        this._scanState = {phase: "starting", completed: 0, total: 0};
         this.updateScanUI();
-        try {
-            const assets = await getAllAssets(false, '', '', progress => {
-                if (sequence !== this._scanSequence || !this._scanBusy) return;
-                this._scanState = progress;
-                this.updateScanUI();
-            });
-            if (sequence !== this._scanSequence) return;
-            auditIndex.groups = assets;
-            this._assets = filterAssetGroups(assets, this.showInvalidOnly, this.searchText, this.singularType);
-            this._scanState = {phase: "complete", completed: 0, total: 0};
-        } catch (error) {
-            if (sequence !== this._scanSequence) return;
-            console.error("Asset Auditor | Asset scan failed", error);
-            this._scanState = {phase: "error", completed: 0, total: 0};
-        } finally {
-            if (sequence === this._scanSequence) {
-                this._scanBusy = false;
-                this._loading = false;
-                this.updateScanUI();
-                if (this.rendered) await this.render();
-            }
-        }
+        if (this.rendered) await this.render();
+      }
     }
+  }
 
-    activateListeners(html) {
+  activateListeners(html) {
+    html
+      .find(".recheck-assets-button")
+      .click(() => this.refresh(html, { rebuild: true }));
+    html
+      .off("asset-auditor:path-saved.scan")
+      .on("asset-auditor:path-saved.scan", () => this.updateScanUI());
+    html
+      .off("asset-auditor:path-saved.wildcards")
+      .on("asset-auditor:path-saved.wildcards", (_event, entry, row) => {
+        void updateWildcardFeedback(entry, row).catch((error) =>
+          console.error(
+            "Asset Auditor | Could not refresh wildcard feedback",
+            error,
+          ),
+        );
+      });
 
-        html.find('.recheck-assets-button').click(() => this.refresh(html, {rebuild: true}));
-        html.off('asset-auditor:path-saved.scan').on('asset-auditor:path-saved.scan', () => this.updateScanUI());
-        html.off('asset-auditor:path-saved.wildcards').on('asset-auditor:path-saved.wildcards', (_event, entry, row) => {
-            void updateWildcardFeedback(entry, row).catch(error =>
-                console.error("Asset Auditor | Could not refresh wildcard feedback", error));
-        });
+    this._pathGroupObserver?.disconnect();
+    this._pathGroupObserver = groupAssetRows(
+      html[0],
+      (key, values) => game.i18n.format(key, values),
+      (input) => $(input).data("original-value"),
+    );
 
-        this._pathGroupObserver?.disconnect();
-        this._pathGroupObserver = groupAssetRows(html[0],
-            (key, values) => game.i18n.format(key, values),
-            input => $(input).data('original-value'));
+    html.find(".open-original-button").click(async (event) => {
+      const button = event.currentTarget;
+      const entry = this.context.assets
+        .flatMap((group) => group.assets)
+        .find(
+          (asset) =>
+            asset.type === button.dataset.assetType &&
+            asset.id === button.dataset.assetId,
+        );
+      button.disabled = true;
+      try {
+        const { openAssetOriginal } = await import("./asset-original.js");
+        await openAssetOriginal(entry?.asset);
+      } catch (error) {
+        console.error("Asset Auditor | Could not open original", error);
+        ui.notifications.error(
+          game.i18n.localize("asset-auditor.app.open-original-error"),
+        );
+      } finally {
+        button.disabled = false;
+      }
+    });
 
+    html.find("#toggle-invalid").change(async (event) => {
+      this.showInvalidOnly = event.target.checked;
+      this.refresh(html);
+    });
 
-        html.find('.open-original-button').click(async (event) => {
-            const button = event.currentTarget;
-            const entry = this.context.assets.flatMap(group => group.assets)
-                .find(asset => asset.type === button.dataset.assetType && asset.id === button.dataset.assetId);
-            button.disabled = true;
-            try {
-                const { openAssetOriginal } = await import("./asset-original.js");
-                await openAssetOriginal(entry?.asset);
-            } catch (error) {
-                console.error("Asset Auditor | Could not open original", error);
-                ui.notifications.error(game.i18n.localize("asset-auditor.app.open-original-error"));
-            } finally {
-                button.disabled = false;
-            }
-        });
+    html.find("#asset-type-dropdown").change((event) => {
+      this.singularType = event.target.value;
+      this.refresh(html);
+    });
 
-        html.find('#toggle-invalid').change(async (event) => {
-            this.showInvalidOnly = event.target.checked;
-            this.refresh(html);
-        });
+    html.find(".delete-search-button").click((event) => {
+      this.performDeleteSearch(event, html);
+    });
 
-        html.find('#asset-type-dropdown').change((event) => {
-            this.singularType = event.target.value;
-            this.refresh(html);
-        });
+    html.find(".delete-replace-button").click((event) => {
+      this.performDeleteReplace(event, html);
+    });
 
-        html.find('.delete-search-button').click((event) => {
-            this.performDeleteSearch(event, html);
-        });
+    html.find(".search-button").click((_event) => {
+      this.performSearch(html);
+    });
 
-        html.find('.delete-replace-button').click((event) => {
-            this.performDeleteReplace(event, html);
-        });
+    html.find(".replace-button").click(async (_event) => {
+      await this.performReplacement(html);
+    });
 
-        html.find('.search-button').click((_event) => {
-            this.performSearch(html);
-        });
+    html.find(".update-button").click(async (event) => {
+      await this.saveAssetRow($(event.currentTarget), html);
+    });
 
-        html.find('.replace-button').click(async (_event) => {
-            await this.performReplacement(html);
-        });
+    html.find(".reset-button").click((event) => {
+      const resetButton = $(event.currentTarget);
+      const updateButton = resetButton.siblings(".update-button");
+      const input = resetButton.siblings(".path-input");
+      const originalValue = input.data("original-value");
+      input.val(originalValue);
+      resetButton.css("opacity", "");
+      resetButton.prop("disabled", true);
+      updateButton.css("opacity", "");
+      updateButton.prop("disabled", true);
+    });
 
-        html.find('.update-button').click(async (event) => {
-            await this.saveAssetRow($(event.currentTarget), html);
-        });
-
-        html.find('.reset-button').click((event) => {
-            const resetButton = $(event.currentTarget);
-            const updateButton = resetButton.siblings('.update-button');
-            const input = resetButton.siblings('.path-input');
-            const originalValue = input.data('original-value');
-            input.val(originalValue);
-            resetButton.css('opacity', '');
-            resetButton.prop('disabled', true);
-            updateButton.css('opacity', '');
-            updateButton.prop('disabled', true);
-        });
-
-        html.find('.browse-button').click(async (event) => {
-            const browseButton = $(event.currentTarget);
-            const input = browseButton.siblings('.path-input');
-            const assetId = browseButton.data('asset-id');
-            const asset = this.findAsset(assetId);
-            if (!asset) {
-                ui.notifications.error(game.i18n.format("asset-auditor.app.asset-not-found", { id: assetId }));
-                return;
-            }
-            if (isWildcardPath(input.val())) {
-                ui.notifications.warn(game.i18n.localize("asset-auditor.app.wildcard-picker-warning"));
-            }
-            const lastValidPath = asset.lastValidPath;
-            const filePicker = new FilePicker({
-                type: 'any',
-                current: lastValidPath,
-                callback: async (path) => {
-                    // An intervening render/filter can invalidate the captured row.
-                    if (!input[0]?.isConnected || this._loading || this.findAsset(assetId) !== asset) return;
-                    input.val(path).trigger('input');
-                    await this.saveAssetRow(browseButton.siblings('.update-button'), html);
-                },
-                top: this.position.top + 40,
-                left: this.position.left + 10
-            });
-            // browse() opens the picker; selection happens later in its callback.
-            await filePicker.browse(lastValidPath);
-        });
-
-        html.find('.path-input').on('input', (event) => {
-            const input = $(event.currentTarget);
-            const originalValue = input.data('original-value');
-            const currentValue = input.val();
-            const resetButton = input.siblings('.reset-button');
-            const updateButton = input.siblings('.update-button');
-            if (currentValue !== originalValue) {
-                resetButton.css('opacity', '');
-                resetButton.prop('disabled', false);
-                updateButton.css('opacity', '');
-                updateButton.prop('disabled', false);
-            } else {
-                resetButton.css('opacity', '');
-                resetButton.prop('disabled', true);
-                updateButton.css('opacity', '');
-                updateButton.prop('disabled', true);
-            }
-        });
-
-        html.find('.search-input')
-            .on('input', (event) => {
-                const input = $(event.currentTarget);
-                this.currentSearchInput = input.val();
-                this.updateOperability(html);
-            })
-            .on('keydown', (event) => {
-                if (event.key === 'Enter') {
-                    event.preventDefault();
-                    this.performSearch(html);
-                } else if (event.key === 'Escape') {
-                    this.performDeleteSearch(event, html);
-                }
-            });
-
-        html.find('.replace-input')
-            .on('input', (event) => {
-                const input = $(event.currentTarget);
-                this.replaceText = input.val();
-                this.updateOperability(html);
-            })
-            .on('keydown', async (event) => {
-                if (event.key === 'Enter') {
-                    event.preventDefault();
-                    await this.performReplacement(html);
-                } else if (event.key === 'Escape') {
-                    this.performDeleteReplace(event, html);
-                }
-            });
-
-        this.updateOperability(html);
-        this.updateScanUI();
-        if (this._scanRequested && !this._scanBusy && !this._savingAssets?.size) {
-            this._scanPromise = this.scanAssets();
-            void this._scanPromise.catch(error => console.error("Asset Auditor | Could not render scan results", error));
-        }
-    }
-
-    async close(options = {}) {
-        this._pathGroupObserver?.disconnect();
-        const rebuildPending = this._scanRequested || this._scanBusy;
-        this._scanSequence++;
-        this._scanBusy = false;
-        this._loading = false;
-        this._scanRequested = rebuildPending || auditIndex.groups === null;
-        this._scanState = {phase: auditIndex.groups === null ? "idle" : "complete", completed: 0, total: 0};
-        return super.close(options);
-    }
-
-
-    performDeleteReplace(event, html) {
-        const button = $(event.currentTarget);
-        const input = button.siblings('.replace-input');
-        input.val('');
-        this.replaceText = '';
-        this.refresh(html);
-    }
-
-    performDeleteSearch(event, html) {
-        const button = $(event.currentTarget);
-        const input = button.siblings('.search-input');
-        input.val('');
-        this.currentSearchInput = '';
-        this.searchText = '';
-        this.refresh(html);
-    }
-
-    async performReplacement(html) {
-        if (!this.currentSearchInput.trim() || this._loading || this._savingAssets.size) return;
-        this.searchText = this.currentSearchInput;
-        const entries = this.context.assets.flatMap(group => group.assets);
-        this._savingAssets.add("batch");
-        html.find('button, input, select').prop('disabled', true);
-        try {
-            for (const entry of entries) {
-                if (!entry.path.includes(this.searchText)) continue;
-                await this.updateAssetPath(entry.id, entry.path.replace(this.searchText, this.replaceText));
-                await this.revalidateEntry(entry);
-            }
-        } catch (error) {
-            console.error("Asset Auditor | Replacement stopped", error);
-            ui.notifications.error(game.i18n.localize("asset-auditor.app.save-error"));
-        } finally {
-            this._savingAssets.delete("batch");
-            this.refresh(html);
-        }
-    }
-
-    performSearch(html) {
-        this.searchText = this.currentSearchInput;
-        this.refresh(html);
-    }
-
-    refresh(html, {rebuild = false} = {}) {
-        if (rebuild || (auditIndex.groups === null && !this._scanBusy)) this._scanRequested = true;
-        this._refreshRequested = true;
-        if (this._scanBusy || this._savingAssets.size || !this.rendered) return;
-        this._refreshRequested = false;
-        return this.render({force: true});
-    }
-
-    async revalidateEntry(entry) {
-        const path = getAssetPath(entry.asset);
-        const isWildcard = isWildcardPath(path);
-        const wildcardCount = isWildcard ? await wildcardMatchCount(path) : null;
-        const isValid = isWildcard ? wildcardCount > 0 : await checkAssetPath(path);
-        const lastValidPath = isValid ? '' : await getLastValidPath(path);
-        Object.assign(entry, {path, isWildcard, wildcardCount, isValid, lastValidPath,
-            icon: getIcon(entry.asset, isValid)});
-    }
-
-    updateOperability(html) {
-        const deleteSearchButton = html.find('.delete-search-button');
-        const searchButton = html.find('.search-button');
-        const replaceButton = html.find('.replace-button');
-        if (this.currentSearchInput.trim() !== '') {
-            deleteSearchButton.prop('disabled', false);
-            deleteSearchButton.css('opacity', '');
-            searchButton.prop('disabled', false);
-            replaceButton.prop('disabled', false);
-        } else {
-            deleteSearchButton.prop('disabled', true);
-            deleteSearchButton.css('opacity', '');
-            searchButton.prop('disabled', true);
-            replaceButton.prop('disabled', true);
-        }
-        const deleteReplaceButton = html.find('.delete-replace-button');
-        if (this.replaceText.trim() !== '') {
-            deleteReplaceButton.prop('disabled', false);
-            deleteReplaceButton.css('opacity', '');
-        } else {
-            deleteReplaceButton.prop('disabled', true);
-            deleteReplaceButton.css('opacity', '');
-        }
-    }
-
-    async saveAssetRow(updateButton, html) {
-        const assetId = updateButton.data('asset-id');
-        if (this._loading || this._savingAssets.has("batch") || this._savingAssets.has(assetId)) return;
-        this._savingAssets.add(assetId);
-        const row = updateButton.closest('.asset-row');
-        const controls = row.find('button, input');
-        controls.prop('disabled', true);
-        const input = updateButton.siblings('.path-input');
-        try {
-            const entry = this.findAsset(assetId);
-            if (!entry) return;
-            await this.updateAssetPath(assetId, input.val());
-            await this.revalidateEntry(entry);
-            const {path: savedPath, isValid, lastValidPath} = entry;
-            input.val(savedPath).data('original-value', savedPath);
-            row.next('.asset-invalid-hint').remove();
-            if (this.showInvalidOnly && isValid) {
-                row.remove();
-                for (const group of this.context.assets) {
-                    group.assets = group.assets.filter(candidate => candidate !== entry);
-                }
-            } else {
-                // Update this usage in place so unrelated drafts stay intact.
-                row.toggleClass('is-invalid', !isValid).css('color', '');
-                entry.icon = getIcon(entry.asset, isValid);
-                row.find('.asset-status').attr('class', 'asset-status ' + entry.icon);
-                if (!isValid) {
-                    const hint = $('<div class="asset-invalid-hint" style="margin-bottom: 10px;"></div>');
-                    $('<span></span>').text(game.i18n.localize("asset-auditor.app.last-valid-path") + ' ').appendTo(hint);
-                    $('<span></span>').text(lastValidPath).appendTo(hint);
-                    row.after(hint);
-                }
-            }
-            html.trigger('asset-auditor:path-saved', [entry, row[0]]);
-        } catch (error) {
-            console.error("Asset Auditor | Could not save asset path", error);
-            ui.notifications.error(game.i18n.localize("asset-auditor.app.save-error"));
-        } finally {
-            this._savingAssets.delete(assetId);
-            controls.prop('disabled', false);
-            const dirty = input.val() !== input.data('original-value');
-            updateButton.add(updateButton.siblings('.reset-button'))
-                .prop('disabled', !dirty).css('opacity', dirty ? 1 : 0);
-            if (!this._savingAssets.size && (this._scanRequested || this._refreshRequested)) this.refresh(html);
-        }
-    }
-
-    findAsset(assetId) {
-        for (const assetMap of this.context.assets) {
-            const assetObject = assetMap.assets.find(asset => asset.id === assetId);
-            if (assetObject) {
-                return assetObject;
-            }
-        }
-        return null;
-    }
-
-    async updateAssetPath(assetId, inputValue) {
-        const asset = this.findAsset(assetId);
-        if (!asset) {
-            ui.notifications.error(game.i18n.format("asset-auditor.app.asset-not-found", { id: assetId }));
+    html.find(".browse-button").click(async (event) => {
+      const browseButton = $(event.currentTarget);
+      const input = browseButton.siblings(".path-input");
+      const assetId = browseButton.data("asset-id");
+      const asset = this.findAsset(assetId);
+      if (!asset) {
+        ui.notifications.error(
+          game.i18n.format("asset-auditor.app.asset-not-found", {
+            id: assetId,
+          }),
+        );
+        return;
+      }
+      if (isWildcardPath(input.val())) {
+        ui.notifications.warn(
+          game.i18n.localize("asset-auditor.app.wildcard-picker-warning"),
+        );
+      }
+      const lastValidPath = asset.lastValidPath;
+      const filePicker = new FilePicker({
+        type: "any",
+        current: lastValidPath,
+        callback: async (path) => {
+          // An intervening render/filter can invalidate the captured row.
+          if (
+            !input[0]?.isConnected ||
+            this._loading ||
+            this.findAsset(assetId) !== asset
+          )
             return;
+          input.val(path).trigger("input");
+          await this.saveAssetRow(
+            browseButton.siblings(".update-button"),
+            html,
+          );
+        },
+        top: this.position.top + 40,
+        left: this.position.left + 10,
+      });
+      // browse() opens the picker; selection happens later in its callback.
+      await filePicker.browse(lastValidPath);
+    });
+
+    html.find(".path-input").on("input", (event) => {
+      const input = $(event.currentTarget);
+      const originalValue = input.data("original-value");
+      const currentValue = input.val();
+      const resetButton = input.siblings(".reset-button");
+      const updateButton = input.siblings(".update-button");
+      if (currentValue !== originalValue) {
+        resetButton.css("opacity", "");
+        resetButton.prop("disabled", false);
+        updateButton.css("opacity", "");
+        updateButton.prop("disabled", false);
+      } else {
+        resetButton.css("opacity", "");
+        resetButton.prop("disabled", true);
+        updateButton.css("opacity", "");
+        updateButton.prop("disabled", true);
+      }
+    });
+
+    html
+      .find(".search-input")
+      .on("input", (event) => {
+        const input = $(event.currentTarget);
+        this.currentSearchInput = input.val();
+        this.updateOperability(html);
+      })
+      .on("keydown", (event) => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          this.performSearch(html);
+        } else if (event.key === "Escape") {
+          this.performDeleteSearch(event, html);
         }
-        asset.asset = await setAssetPath(asset.asset, inputValue);
+      });
+
+    html
+      .find(".replace-input")
+      .on("input", (event) => {
+        const input = $(event.currentTarget);
+        this.replaceText = input.val();
+        this.updateOperability(html);
+      })
+      .on("keydown", async (event) => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          await this.performReplacement(html);
+        } else if (event.key === "Escape") {
+          this.performDeleteReplace(event, html);
+        }
+      });
+
+    this.updateOperability(html);
+    this.updateScanUI();
+    if (this._scanRequested && !this._scanBusy && !this._savingAssets?.size) {
+      this._scanPromise = this.scanAssets();
+      void this._scanPromise.catch((error) =>
+        console.error("Asset Auditor | Could not render scan results", error),
+      );
+    }
+  }
+
+  async close(options = {}) {
+    this._pathGroupObserver?.disconnect();
+    const rebuildPending = this._scanRequested || this._scanBusy;
+    this._scanSequence++;
+    this._scanBusy = false;
+    this._loading = false;
+    this._scanRequested = rebuildPending || auditIndex.groups === null;
+    this._scanState = {
+      phase: auditIndex.groups === null ? "idle" : "complete",
+      completed: 0,
+      total: 0,
     };
+    return super.close(options);
+  }
+
+  performDeleteReplace(event, html) {
+    const button = $(event.currentTarget);
+    const input = button.siblings(".replace-input");
+    input.val("");
+    this.replaceText = "";
+    this.refresh(html);
+  }
+
+  performDeleteSearch(event, html) {
+    const button = $(event.currentTarget);
+    const input = button.siblings(".search-input");
+    input.val("");
+    this.currentSearchInput = "";
+    this.searchText = "";
+    this.refresh(html);
+  }
+
+  async performReplacement(html) {
+    if (
+      !this.currentSearchInput.trim() ||
+      this._loading ||
+      this._savingAssets.size
+    )
+      return;
+    this.searchText = this.currentSearchInput;
+    const entries = this.context.assets.flatMap((group) => group.assets);
+    this._savingAssets.add("batch");
+    html.find("button, input, select").prop("disabled", true);
+    try {
+      for (const entry of entries) {
+        if (!entry.path.includes(this.searchText)) continue;
+        await this.updateAssetPath(
+          entry.id,
+          entry.path.replace(this.searchText, this.replaceText),
+        );
+        await this.revalidateEntry(entry);
+      }
+    } catch (error) {
+      console.error("Asset Auditor | Replacement stopped", error);
+      ui.notifications.error(
+        game.i18n.localize("asset-auditor.app.save-error"),
+      );
+    } finally {
+      this._savingAssets.delete("batch");
+      this.refresh(html);
+    }
+  }
+
+  performSearch(html) {
+    this.searchText = this.currentSearchInput;
+    this.refresh(html);
+  }
+
+  refresh(html, { rebuild = false } = {}) {
+    if (rebuild || (auditIndex.groups === null && !this._scanBusy))
+      this._scanRequested = true;
+    this._refreshRequested = true;
+    if (this._scanBusy || this._savingAssets.size || !this.rendered) return;
+    this._refreshRequested = false;
+    return this.render({ force: true });
+  }
+
+  async revalidateEntry(entry) {
+    const path = getAssetPath(entry.asset);
+    const isWildcard = isWildcardPath(path);
+    const wildcardCount = isWildcard ? await wildcardMatchCount(path) : null;
+    const isValid = isWildcard ? wildcardCount > 0 : await checkAssetPath(path);
+    const lastValidPath = isValid ? "" : await getLastValidPath(path);
+    Object.assign(entry, {
+      path,
+      isWildcard,
+      wildcardCount,
+      isValid,
+      lastValidPath,
+      icon: getIcon(entry.asset, isValid),
+    });
+  }
+
+  updateOperability(html) {
+    const deleteSearchButton = html.find(".delete-search-button");
+    const searchButton = html.find(".search-button");
+    const replaceButton = html.find(".replace-button");
+    if (this.currentSearchInput.trim() !== "") {
+      deleteSearchButton.prop("disabled", false);
+      deleteSearchButton.css("opacity", "");
+      searchButton.prop("disabled", false);
+      replaceButton.prop("disabled", false);
+    } else {
+      deleteSearchButton.prop("disabled", true);
+      deleteSearchButton.css("opacity", "");
+      searchButton.prop("disabled", true);
+      replaceButton.prop("disabled", true);
+    }
+    const deleteReplaceButton = html.find(".delete-replace-button");
+    if (this.replaceText.trim() !== "") {
+      deleteReplaceButton.prop("disabled", false);
+      deleteReplaceButton.css("opacity", "");
+    } else {
+      deleteReplaceButton.prop("disabled", true);
+      deleteReplaceButton.css("opacity", "");
+    }
+  }
+
+  async saveAssetRow(updateButton, html) {
+    const assetId = updateButton.data("asset-id");
+    if (
+      this._loading ||
+      this._savingAssets.has("batch") ||
+      this._savingAssets.has(assetId)
+    )
+      return;
+    this._savingAssets.add(assetId);
+    const row = updateButton.closest(".asset-row");
+    const controls = row.find("button, input");
+    controls.prop("disabled", true);
+    const input = updateButton.siblings(".path-input");
+    try {
+      const entry = this.findAsset(assetId);
+      if (!entry) return;
+      await this.updateAssetPath(assetId, input.val());
+      await this.revalidateEntry(entry);
+      const { path: savedPath, isValid, lastValidPath } = entry;
+      input.val(savedPath).data("original-value", savedPath);
+      row.next(".asset-invalid-hint").remove();
+      if (this.showInvalidOnly && isValid) {
+        row.remove();
+        for (const group of this.context.assets) {
+          group.assets = group.assets.filter(
+            (candidate) => candidate !== entry,
+          );
+        }
+      } else {
+        // Update this usage in place so unrelated drafts stay intact.
+        row.toggleClass("is-invalid", !isValid).css("color", "");
+        entry.icon = getIcon(entry.asset, isValid);
+        row.find(".asset-status").attr("class", "asset-status " + entry.icon);
+        if (!isValid) {
+          const hint = $(
+            '<div class="asset-invalid-hint" style="margin-bottom: 10px;"></div>',
+          );
+          $("<span></span>")
+            .text(game.i18n.localize("asset-auditor.app.last-valid-path") + " ")
+            .appendTo(hint);
+          $("<span></span>").text(lastValidPath).appendTo(hint);
+          row.after(hint);
+        }
+      }
+      html.trigger("asset-auditor:path-saved", [entry, row[0]]);
+    } catch (error) {
+      console.error("Asset Auditor | Could not save asset path", error);
+      ui.notifications.error(
+        game.i18n.localize("asset-auditor.app.save-error"),
+      );
+    } finally {
+      this._savingAssets.delete(assetId);
+      controls.prop("disabled", false);
+      const dirty = input.val() !== input.data("original-value");
+      updateButton
+        .add(updateButton.siblings(".reset-button"))
+        .prop("disabled", !dirty)
+        .css("opacity", dirty ? 1 : 0);
+      if (
+        !this._savingAssets.size &&
+        (this._scanRequested || this._refreshRequested)
+      )
+        this.refresh(html);
+    }
+  }
+
+  findAsset(assetId) {
+    for (const assetMap of this.context.assets) {
+      const assetObject = assetMap.assets.find((asset) => asset.id === assetId);
+      if (assetObject) {
+        return assetObject;
+      }
+    }
+    return null;
+  }
+
+  async updateAssetPath(assetId, inputValue) {
+    const asset = this.findAsset(assetId);
+    if (!asset) {
+      ui.notifications.error(
+        game.i18n.format("asset-auditor.app.asset-not-found", { id: assetId }),
+      );
+      return;
+    }
+    asset.asset = await setAssetPath(asset.asset, inputValue);
+  }
 }
 
 export { AssetFilepaths };

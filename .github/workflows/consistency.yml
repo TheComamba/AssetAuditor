@@ -2,18 +2,18 @@ name: Check Consistency
 
 on:
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   check-consistency:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-      with:
-        submodules: true
-    - name: Check version consistency
-      run: ./foundry_scripts/check_version_consistency.sh
-    - name: Check localizations consistency
-      run: ./foundry_scripts/check_localizations_consistency.sh
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+      - name: Check version consistency
+        run: ./foundry_scripts/check_version_consistency.sh
+      - name: Check localizations consistency
+        run: ./foundry_scripts/check_localizations_consistency.sh

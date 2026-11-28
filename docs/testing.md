@@ -42,18 +42,18 @@ installable Foundry module is the `src/` directory.
 The audit starts from the world's Actor, JournalEntry, Playlist, Scene and User
 collections. The field mapping is defined in `src/scripts/asset-aggregation.js`.
 
-| Reference | Field |
-| --- | --- |
-| Actor portrait | `img` |
-| Actor-owned Item image | `img` |
-| JournalEntryPage media | `src` |
-| PlaylistSound audio | `path` |
+| Reference                   | Field                        |
+| --------------------------- | ---------------------------- |
+| Actor portrait              | `img`                        |
+| Actor-owned Item image      | `img`                        |
+| JournalEntryPage media      | `src`                        |
+| PlaylistSound audio         | `path`                       |
 | Actor prototype token image | `prototypeToken.texture.src` |
-| Scene background | `background.src` |
-| Scene ambient sound | `path` |
-| Scene tile image or video | `texture.src` |
-| Placed token image | `texture.src` |
-| User avatar | `avatar` |
+| Scene background            | `background.src`             |
+| Scene ambient sound         | `path`                       |
+| Scene tile image or video   | `texture.src`                |
+| Placed token image          | `texture.src`                |
+| User avatar                 | `avatar`                     |
 
 Local checks use User Data and Core Data directory listings. Path comparisons
 preserve the returned case, normalize URI representations, and retain the stored
@@ -76,66 +76,66 @@ outcome and reproduction details for each check.
 ### Window and scan lifecycle
 
 - [ ] Open Asset Filepaths from the Settings sidebar. Verify the native window,
-  resize behavior, light/dark theme, labels and keyboard navigation.
+      resize behavior, light/dark theme, labels and keyboard navigation.
 - [ ] Resize from approximately 1100px to 680px. Check long names and paths,
-  responsive row layout, fixed tools and a visible scrollbar for the results.
+      responsive row layout, fixed tools and a visible scrollbar for the results.
 - [ ] Click the launcher twice during an initial render. Verify one audit window.
 - [ ] Observe a visible window while a slow scan is running, counters for each
-  stage and a completion summary with entry and invalid-reference counts.
+      stage and a completion summary with entry and invalid-reference counts.
 - [ ] Search for an unmatched name or enable invalid-only results with all valid
-  references. Verify the explicit empty-result message.
+      references. Verify the explicit empty-result message.
 - [ ] Close during a slow scan. Verify the window stays closed. Reopen with a new
-  query and verify that older results preserve the newer query's result set.
+      query and verify that older results preserve the newer query's result set.
 - [ ] Exercise an unavailable index, then restore access and use Refresh index. Verify
-  the failure state, retained results and successful retry.
+      the failure state, retained results and successful retry.
 
 ### Snapshot and explicit refresh
 
 - [ ] Finish a scan, then change search text, document type and invalid-only
-  filters. Results should change without starting another filesystem scan.
+      filters. Results should change without starting another filesystem scan.
 - [ ] Repair a path in invalid-only results. Clear that filter and verify the
-  repaired usage reappears with its saved path and validity.
+      repaired usage reappears with its saved path and validity.
 - [ ] Change a reference through its native sheet, add a document or add/remove a
-  file outside the audit. The snapshot should retain its previous result until
-  **Refresh index** completes, then include the changes.
+      file outside the audit. The snapshot should retain its previous result until
+      **Refresh index** completes, then include the changes.
 - [ ] Close and reopen the audit after completion. Verify the snapshot is reused.
-  Reload the browser and verify that a new initial scan runs.
+      Reload the browser and verify that a new initial scan runs.
 - [ ] Request Refresh index during a delayed save. Verify that it waits for the
-  write and that the new snapshot contains the persisted result.
+      write and that the new snapshot contains the persisted result.
 - [ ] Make an explicit rebuild fail, then retry. Verify that the last successful
-  snapshot remains visible until a new complete scan replaces it.
+      snapshot remains visible until a new complete scan replaces it.
 
 ### Paths, documents and editing
 
 - [ ] Select `sounds/dice.wav` from Core Data for a playlist sound and play it.
-  Select an existing Core Data icon, then test a nonexistent icon filename.
+      Select an existing Core Data icon, then test a nonexistent icon filename.
 - [ ] On a case-sensitive server, compare the listed filename with a reference
-  whose filename case differs, from both Windows and Linux browser profiles.
+      whose filename case differs, from both Windows and Linux browser profiles.
 - [ ] Check filenames containing spaces, apostrophes, ampersands, plus signs and Unicode characters using its URI-encoded
-  reference and a cache-busting query. Verify the saved reference is retained.
+      reference and a cache-busting query. Verify the saved reference is retained.
 - [ ] Choose a file for an invalid Actor and PlaylistSound. Verify autosaving,
-  fresh validation, immediate removal from invalid-only results and preservation
-  of another row's draft.
+      fresh validation, immediate removal from invalid-only results and preservation
+      of another row's draft.
 - [ ] Type a path manually, then use Save and Reset. Check that each action
-  affects its chosen usage and the appropriate control states.
+      affects its chosen usage and the appropriate control states.
 - [ ] Repair a prototype-token path, reopen the actor and verify persistence and
-  its random-image and ring settings.
+      its random-image and ring settings.
 - [ ] Check wildcard patterns with zero, one and several matches. Verify counts,
-  the picker reminder and feedback after saving a pattern or selecting one file.
+      the picker reminder and feedback after saving a pattern or selecting one file.
 - [ ] Place copies of the same actor on different scenes. Verify individual
-  usages, scene labels, grouped counts and navigation to the correct token.
+      usages, scene labels, grouped counts and navigation to the correct token.
 - [ ] Open a JournalEntryPage, actor-owned Item and PlaylistSound from the audit.
-  Open a placeable from another scene while retaining the current canvas.
+      Open a placeable from another scene while retaining the current canvas.
 - [ ] Open a picker, change filters, then select a file. Verify that the obsolete
-  picker leaves the current rows and documents unchanged.
+      picker leaves the current rows and documents unchanged.
 - [ ] Request Refresh index during a delayed write. Verify that the scan waits for the
-  write. Also close during the write and check that its completion keeps the
-  window closed.
+      write. Also close during the write and check that its completion keeps the
+      window closed.
 - [ ] Exercise a rejected write. Verify its error feedback and retryable row.
 - [ ] Search by name, path and parent name. Verify Enter and Escape behavior and
-  replacement within the displayed result set.
+      replacement within the displayed result set.
 - [ ] Enable the startup audit and reload as a GM or Assistant GM. Verify an
-  invalid-reference notification when the test world contains missing assets.
+      invalid-reference notification when the test world contains missing assets.
 
 ### Module integration and release record
 
