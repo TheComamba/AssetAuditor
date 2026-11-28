@@ -6,9 +6,13 @@
     {
       "name": "The Comamba",
       "email": "thecomamba@jojoheinze.de"
+    },
+    {
+      "name": "vertigoogle",
+      "url": "https://github.com/vertigoogle"
     }
   ],
-  "version": "2.0.3",
+  "version": "2.1.0",
   "compatibility": {
     "minimum": "13",
     "verified": "14"
@@ -27,9 +31,9 @@
     }
   ],
   "url": "https://github.com/TheComamba/AssetAuditor",
-  "manifest": "https://raw.githubusercontent.com/TheComamba/AssetAuditor/v2.0.3/src/module.json",
-  "download": "https://github.com/TheComamba/AssetAuditor/archive/refs/tags/v2.0.3.zip",
+  "manifest": "https://raw.githubusercontent.com/TheComamba/AssetAuditor/v2.1.0/src/module.json",
+  "download": "https://github.com/TheComamba/AssetAuditor/archive/refs/tags/v2.1.0.zip",
   "bugs": "https://github.com/TheComamba/AssetAuditor/issues",
-  "readme": "https://github.com/TheComamba/AssetAuditor/blob/v2.0.3/README.md",
+  "readme": "https://github.com/TheComamba/AssetAuditor/blob/v2.1.0/README.md",
   "styles": ["styles/asset-filepaths.css", "styles/asset-scan.css"]
 }
